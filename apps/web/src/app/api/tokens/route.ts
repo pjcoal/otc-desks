@@ -4,7 +4,7 @@ import { explore } from "@app/market";
 import { route, query } from "@/server/http";
 import { registry } from "@/server/context";
 
-const SECTIONS = ["trending", "new", "near_graduation", "recently_graduated", "most_otc", "largest_discounts", "largest_otc_trades"] as const;
+const SECTIONS = ["launched_here", "trending", "new", "near_graduation", "recently_graduated", "most_otc", "largest_discounts", "largest_otc_trades"] as const;
 
 /** GET /api/tokens?section=trending — discovery sections, real indexed data only. */
 export const GET = route({}, async ({ req }) => {

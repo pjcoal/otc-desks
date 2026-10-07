@@ -1,6 +1,7 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { buttonClass } from "@/components/ui/button";
 import { relativeTime } from "@app/shared";
 import { api } from "@/lib/api";
 import type { OtcTradeRow, TokenCard } from "@/lib/types";
@@ -10,11 +11,16 @@ import { Empty, Skeleton } from "@/components/ui/skeleton";
 import { TokenTable } from "./token-table";
 
 export function LiveMarkets() {
-  const { data, isLoading } = useQuery({ queryKey: ["explore", "trending"], queryFn: () => api<{ items: TokenCard[] }>("/api/tokens?section=trending&limit=8") });
+  const { data, isLoading } = useQuery({ queryKey: ["explore", "launched_here"], queryFn: () => api<{ items: TokenCard[] }>("/api/tokens?section=launched_here&limit=8") });
   return (
     <Panel>
-      <PanelHeader title="Live markets" action={<Link href="/explore" className="text-[13px] text-muted hover:text-text">Explore all</Link>} />
-      {isLoading ? <Skeleton className="m-4 h-40" /> : <TokenTable items={data?.items ?? []} emptyTitle="No trading activity indexed yet" emptyBody="Markets appear here once the indexer sees Pump trades on this network." />}
+      <PanelHeader title="Launched here" action={<Link href="/explore?s=launched_here" className="text-[13px] text-glacier hover:underline">Explore all Pump coins</Link>} />
+      {isLoading ? <Skeleton className="m-4 h-40" /> : <TokenTable
+          items={data?.items ?? []}
+          emptyTitle="No tokens launched here yet"
+          emptyBody="Coins created with this site's launcher appear here once their launch is confirmed on chain."
+          emptyAction={<Link href="/launch" className={buttonClass({ size: "sm", variant: "primary" })}>Launch a token</Link>}
+        />}
     </Panel>
   );
 }

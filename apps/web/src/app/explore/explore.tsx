@@ -17,6 +17,7 @@ import { TokenAvatar } from "@/components/ui/token-avatar";
 import { TokenTable } from "@/components/home/token-table";
 
 const SECTIONS = [
+  { id: "launched_here", label: "Launched here" },
   { id: "trending", label: "Trending" },
   { id: "new", label: "New" },
   { id: "near_graduation", label: "Near graduation" },

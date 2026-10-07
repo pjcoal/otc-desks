@@ -8,8 +8,13 @@ import { VenueBadge } from "@/components/ui/status";
 import { TokenAvatar } from "@/components/ui/token-avatar";
 import { Empty } from "@/components/ui/skeleton";
 
-export function TokenTable({ items, emptyTitle, emptyBody }: { items: TokenCard[]; emptyTitle: string; emptyBody?: string }) {
-  if (!items.length) return <Empty title={emptyTitle}>{emptyBody}</Empty>;
+export function TokenTable({ items, emptyTitle, emptyBody, emptyAction }: { items: TokenCard[]; emptyTitle: string; emptyBody?: string; emptyAction?: React.ReactNode }) {
+  if (!items.length)
+    return (
+      <Empty title={emptyTitle} action={emptyAction}>
+        {emptyBody}
+      </Empty>
+    );
   return (
     <div className="m-2 overflow-x-auto bg-ink bevel-in">
       <table className="w-full min-w-[720px] text-[13px]">

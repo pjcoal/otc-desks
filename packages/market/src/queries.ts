@@ -86,12 +86,23 @@ export async function searchTokens(db: Db, q: string, limit = 12) {
   });
 }
 
-export type ExploreSection = "trending" | "new" | "near_graduation" | "recently_graduated" | "most_otc" | "largest_discounts" | "largest_otc_trades";
+export type ExploreSection = "launched_here" | "trending" | "new" | "near_graduation" | "recently_graduated" | "most_otc" | "largest_discounts" | "largest_otc_trades";
 
 export async function explore(db: Db, section: ExploreSection, limit = 24) {
   // `isDemo` marks end-to-end test fixtures only; they never appear in listings.
   const noFixtures = { isDemo: false };
   switch (section) {
+    case "launched_here":
+      // Only coins created through this site's launcher (recorded after on-chain verification of the create).
+      return {
+        kind: "tokens" as const,
+        items: await db.token.findMany({
+          where: { ...noFixtures, launchedViaPlatform: true },
+          select: tokenCard,
+          orderBy: [{ lastTradeAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }],
+          take: limit,
+        }),
+      };
     case "trending":
       return {
         kind: "tokens" as const,
