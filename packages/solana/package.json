@@ -1,0 +1,21 @@
+{
+  "name": "@app/solana",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/server.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@app/shared": "*",
+    "@solana/spl-token": "0.4.15",
+    "@solana/spl-token-metadata": "^0.1.6",
+    "@solana/web3.js": "^1.99.0",
+    "bs58": "^6.0.0",
+    "@noble/hashes": "^2.4.0"
+  }
+}

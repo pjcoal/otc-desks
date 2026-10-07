@@ -1,0 +1,47 @@
+# Local full stack: Postgres, Redis, MinIO (S3), web, indexer.
+#   cp .env.example .env   # then set SESSION_SECRET and PLATFORM_TREASURY_WALLET
+#   docker compose up --build
+services:
+  postgres:
+    image: postgres:17
+    environment: { POSTGRES_USER: otc, POSTGRES_PASSWORD: otc, POSTGRES_DB: otc }
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U otc"], interval: 5s, retries: 10 }
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    healthcheck: { test: ["CMD", "redis-cli", "ping"], interval: 5s, retries: 10 }
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment: { MINIO_ROOT_USER: otcminio, MINIO_ROOT_PASSWORD: otcminio-secret }
+    ports: ["9000:9000", "9001:9001"]
+    volumes: [miniodata:/data]
+
+  web:
+    build: { context: ., target: web }
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://otc:otc@postgres:5432/otc
+      REDIS_URL: redis://redis:6379
+    ports: ["3000:3000"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  indexer:
+    build: { context: ., target: indexer }
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://otc:otc@postgres:5432/otc
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      web: { condition: service_started }
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  miniodata:

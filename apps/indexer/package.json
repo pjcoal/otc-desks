@@ -1,0 +1,23 @@
+{
+  "name": "@app/indexer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx --env-file-if-exists=.env src/main.ts",
+    "dev": "tsx watch --env-file-if-exists=.env src/main.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@app/database": "*",
+    "@app/market": "*",
+    "@app/otc": "*",
+    "@app/pump": "*",
+    "@app/shared": "*",
+    "@app/solana": "*",
+    "@solana/web3.js": "^1.99.0",
+    "tsx": "^4.23.15",
+    "@pump-fun/pump-sdk": "2.0.0",
+    "bn.js": "^5.2.2"
+  }
+}

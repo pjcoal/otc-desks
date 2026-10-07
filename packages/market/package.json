@@ -1,0 +1,21 @@
+{
+  "name": "@app/market",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@app/database": "*",
+    "@app/otc": "*",
+    "@app/pump": "*",
+    "@app/shared": "*",
+    "@app/solana": "*",
+    "@solana/web3.js": "^1.99.0",
+    "undici": "^7.16.0"
+  }
+}

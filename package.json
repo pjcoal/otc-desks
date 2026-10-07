@@ -1,0 +1,57 @@
+{
+  "name": "otc-desks",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Pump.fun launch + discovery with a wallet-to-wallet OTC layer and atomic Solana settlement",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "npm run dev -w @app/web",
+    "build": "npm run db:generate && npm run build -w @app/web",
+    "start": "npm run start -w @app/web",
+    "indexer": "npm run start -w @app/indexer",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:unit": "vitest run --project unit",
+    "test:integration": "vitest run --project integration",
+    "test:chain": "vitest run --project chain",
+    "test:e2e": "npm run test:e2e -w @app/web",
+    "db:generate": "npm run generate -w @app/database",
+    "db:migrate": "npm run migrate -w @app/database",
+    "db:deploy": "npm run deploy -w @app/database",
+    "db:seed-demo": "npm run seed-demo -w @app/database",
+    "db:embedded": "tsx scripts/embedded-postgres.ts",
+    "check": "npm run typecheck && npm run lint && npm run test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "@solana/kit": "^8.4.0",
+    "@types/node": "^24.0.0",
+    "embedded-postgres": "18.4.0-beta.17",
+    "eslint": "^9.39.0",
+    "eslint-plugin-react-hooks": "^7.0.0",
+    "globals": "^17.0.0",
+    "litesvm": "^1.5.0",
+    "tsx": "^4.23.15",
+    "typescript": "6.0.3",
+    "typescript-eslint": "^8.71.1",
+    "vitest": "^5.0.3"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "prisma@7.10.0": true,
+    "@prisma/engines@7.10.0": true,
+    "@embedded-postgres/darwin-arm64@18.4.0-beta.17": true,
+    "bufferutil@4.1.0": true,
+    "utf-8-validate@6.0.6": true,
+    "utf-8-validate@5.0.10": true,
+    "sharp@0.35.5": true
+  }
+}

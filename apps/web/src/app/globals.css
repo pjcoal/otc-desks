@@ -1,0 +1,109 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens. Amounts are coloured by settlement leg: brass = token quantities, glacier = SOL.
+ * Teal / rose mark buy / sell. Everything else stays quiet so those numbers carry the page.
+ */
+@theme {
+  --color-ink: #0e1320;
+  --color-panel: #151b2b;
+  --color-raised: #1c2336;
+  --color-hover: #232b41;
+  --color-line: #2a3349;
+  --color-line-strong: #3a4562;
+  --color-text: #e8ecf4;
+  --color-muted: #8a94ab;
+  --color-faint: #5d6782;
+  --color-brass: #d9b26a;
+  --color-brass-dim: #3a3121;
+  --color-glacier: #93b9ff;
+  --color-glacier-dim: #1f2b47;
+  --color-buy: #4fc9a8;
+  --color-buy-dim: #173a35;
+  --color-sell: #ee7189;
+  --color-sell-dim: #43202b;
+  --color-warn: #f0b45b;
+  --color-warn-dim: #3d2d16;
+
+  --font-sans: var(--font-schibsted), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-instrument), ui-serif, Georgia, serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, monospace;
+
+  --radius-panel: 10px;
+  --radius-control: 7px;
+  --radius-chip: 4px;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    background: var(--color-ink);
+  }
+  body {
+    background: var(--color-ink);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection {
+    background: var(--color-glacier-dim);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-glacier);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+  }
+}
+
+@layer components {
+  .panel {
+    background: var(--color-panel);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-panel);
+  }
+  /*
+   * Schibsted Grotesk's tabular figures also give "," and "." a digit's width, which reads as
+   * "5 , 000". Numbers stay proportional; columns align by right-alignment instead.
+   */
+  .num {
+    font-variant-numeric: lining-nums;
+  }
+  .title-display {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* The landing hero's two legs converging into one transaction — the page's single orchestrated motion. */
+@keyframes leg-in-left {
+  from { transform: translateX(-24px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes leg-in-right {
+  from { transform: translateX(24px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes seal {
+  0%, 60% { opacity: 0; transform: scaleX(0.2); }
+  100% { opacity: 1; transform: none; }
+}
+.leg-left { animation: leg-in-left 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.leg-right { animation: leg-in-right 700ms 120ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.leg-seal { animation: seal 1200ms 200ms cubic-bezier(0.2, 0.7, 0.2, 1) both; transform-origin: center; }

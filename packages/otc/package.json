@@ -1,0 +1,27 @@
+{
+  "name": "@app/otc",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/server/index.ts",
+    "./testing": "./src/testing/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@app/auth": "*",
+    "@app/database": "*",
+    "@app/shared": "*",
+    "@app/solana": "*",
+    "@noble/hashes": "^2.4.0",
+    "@solana/spl-token": "0.4.15",
+    "@solana/web3.js": "^1.99.0",
+    "bs58": "^6.0.0",
+    "zod": "^4.6.5",
+    "buffer": "^6.0.3"
+  },
+  "devDependencies": {}
+}
