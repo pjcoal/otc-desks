@@ -41,7 +41,7 @@ export function WalletProfile({ address }: { address: string }) {
               {data.createdTokens.map((t) => (
                 <li key={t.mint}>
                   <Link href={`/token/${t.mint}`} className="flex items-center gap-3 px-4 py-3 hover:bg-hover">
-                    <TokenAvatar src={t.imageUrl} symbol={t.symbol} size={24} />
+                    <TokenAvatar mint={t.mint} src={t.imageUrl} symbol={t.symbol} size={24} />
                     <span className="font-medium">{t.symbol}</span>
                     <span className="truncate text-muted">{t.name}</span>
                     <span className="ml-auto"><VenueBadge venue={t.venue} /></span>

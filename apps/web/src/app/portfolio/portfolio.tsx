@@ -84,7 +84,7 @@ export function Portfolio() {
                 {data.positions.map((p) => (
                   <tr key={p.mint} className="border-b border-line/60 hover:bg-hover">
                     <td className="px-4 py-2.5">
-                      <Link href={`/token/${p.mint}`} className="flex items-center gap-2"><TokenAvatar src={p.imageUrl} symbol={p.symbol} size={24} />{p.symbol}</Link>
+                      <Link href={`/token/${p.mint}`} className="flex items-center gap-2"><TokenAvatar mint={p.mint} src={p.imageUrl} symbol={p.symbol} size={24} />{p.symbol}</Link>
                     </td>
                     <td className="px-2 py-2.5"><Tokens raw={p.balanceRaw} decimals={p.decimals} /></td>
                     <td className="num px-2 py-2.5">{price(p.priceSolPerToken)}</td>
@@ -164,7 +164,7 @@ export function Portfolio() {
             {data.createdTokens.map((t) => (
               <li key={t.mint}>
                 <Link href={`/token/${t.mint}`} className="flex items-center gap-3 px-4 py-3 hover:bg-hover">
-                  <TokenAvatar src={t.imageUrl} symbol={t.symbol} size={24} />
+                  <TokenAvatar mint={t.mint} src={t.imageUrl} symbol={t.symbol} size={24} />
                   <span>{t.symbol}</span>
                   <VenueBadge venue={t.venue} />
                   <span className="ml-auto text-[13px] text-muted">{relativeTime(t.createdAt)}</span>

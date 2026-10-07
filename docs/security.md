@@ -46,6 +46,7 @@ The server never holds a private key that can move user funds, and has no admin 
 | XSS | React escaping; no `dangerouslySetInnerHTML`; per-request nonce CSP with `strict-dynamic`; untrusted URLs restricted to http(s); uploads served with `sandbox` CSP. |
 | SQL injection | Prisma parameterization; raw SQL only via tagged templates. |
 | SSRF | Metadata fetcher: https only, DNS checked at connect time against private ranges, manual re-validated redirects, size and time caps. |
+| Hostile token images | Remote images are served only through `/api/img/<mint>`, which loads a known token's image (not arbitrary URLs) with the same SSRF-hardened fetcher. It accepts raster formats by magic bytes (no SVG), re-encodes the first frame to WebP with sharp under a pixel cap, and serves it with `default-src 'none'` and `nosniff`. Browsers never contact image hosts directly. |
 | Rate-limit bypass | Limits keyed by IP **and** wallet; trusted-proxy-aware IP extraction; Redis required on mainnet. |
 | Spam orders | Signed orders only; per-wallet open-order cap; seller holdings / buyer SOL soft checks; rate limits; acceptance-hold cap. |
 | Malicious uploads | Magic-byte allowlist (no SVG), pixel cap, re-encode to WebP (strips metadata and polyglot payloads), size cap, content-addressed names. |

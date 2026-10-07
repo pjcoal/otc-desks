@@ -72,7 +72,14 @@ export const serverEnvSchema = z
     S3_PUBLIC_BASE_URL: optionalString,
     METADATA_PROVIDER: z.enum(["local", "s3", "pinata"]).default("local"),
     METADATA_API_KEY: optionalString,
-    IPFS_GATEWAY_URL: z.url().default("https://ipfs.io/ipfs/"),
+    /** Primary IPFS gateway. ipfs.io and its sister gateways no longer serve plain HTTP reliably (429s). */
+    IPFS_GATEWAY_URL: z.url().default("https://4everland.io/ipfs/"),
+    /** Tried in order when the primary gateway fails; IPFS content is content-addressed, so any gateway is equivalent. */
+    IPFS_FALLBACK_GATEWAYS: z
+      .string()
+      .optional()
+      .transform((v) => (v ?? "https://pump.mypinata.cloud/ipfs/,https://gateway.pinata.cloud/ipfs/").split(",").map((s) => s.trim()).filter(Boolean))
+      .pipe(z.array(z.url())),
 
     ADMIN_WALLETS: csv.pipe(z.array(base58Key)),
     PLATFORM_TOKEN_MINT: optionalString.pipe(base58Key.optional()),

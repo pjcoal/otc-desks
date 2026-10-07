@@ -45,7 +45,7 @@ export function OtcDesk() {
                   return (
                     <li key={n.id}>
                       <Link href={`/deal/${latest.publicId}`} className="flex items-center gap-3 px-4 py-3 hover:bg-hover">
-                        <TokenAvatar src={latest.token.imageUrl} symbol={latest.token.symbol} size={28} />
+                        <TokenAvatar mint={latest.token.mint} src={latest.token.imageUrl} symbol={latest.token.symbol} size={28} />
                         <div className="min-w-0 flex-1">
                           <p className="truncate"><Tokens raw={latest.tokenAmountRaw} decimals={latest.token.decimals} symbol={latest.token.symbol} /> for <Sol lamports={latest.quoteAmountRaw} digits={3} /></p>
                           <p className="text-[13px] text-muted">Revision {latest.revision}, {latest.makerWallet === wallet ? "your move is done" : "your move"}</p>
@@ -102,7 +102,7 @@ export function OtcDesk() {
                   <tr key={o.id} className="border-b border-line/60 hover:bg-hover">
                     <td className="px-4 py-2.5">
                       <Link href={`/deal/${o.publicId}`} className="flex items-center gap-2 hover:underline">
-                        <TokenAvatar src={o.token.imageUrl} symbol={o.token.symbol} size={22} />
+                        <TokenAvatar mint={o.token.mint} src={o.token.imageUrl} symbol={o.token.symbol} size={22} />
                         {o.token.symbol}
                       </Link>
                     </td>

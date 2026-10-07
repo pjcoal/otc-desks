@@ -68,7 +68,7 @@ export function TokenView({ mint }: { mint: string }) {
       <div className="min-w-0 space-y-4">
         <Panel className="p-4">
           <div className="flex flex-wrap items-start gap-4">
-            <TokenAvatar src={token.imageUrl} symbol={token.symbol} size={56} />
+            <TokenAvatar mint={token.mint} src={token.imageUrl} symbol={token.symbol} size={56} />
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="title-display text-[24px] sm:text-[30px]">{token.name}</h1>

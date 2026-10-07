@@ -85,6 +85,7 @@ All variables are documented in [`.env.example`](.env.example) and validated at 
 | `ALLOW_MAINNET` + `MAINNET_CHECKLIST_COMPLETED` | Mainnet kill switch (off by default) |
 | `PLATFORM_TREASURY_WALLET`, `OTC_PLATFORM_FEE_BPS`, `OTC_FEE_MODE`, `OTC_REFERRAL_SHARE_BPS` | Disclosed OTC fee economics |
 | `METADATA_PROVIDER` (+ `S3_*` or `METADATA_API_KEY`) | Token image/metadata storage |
+| `IPFS_GATEWAY_URL`, `IPFS_FALLBACK_GATEWAYS` | IPFS gateways, tried in order (ipfs.io no longer serves plain HTTP reliably) |
 | `ADMIN_WALLETS` | Wallets allowed into `/admin` |
 | `INDEXER_MODE` | `firehose` (devnet) or `tracked` (mainnet) |
 

@@ -3,7 +3,8 @@
  *  • only https (plus ipfs:// / ar:// rewritten to configured https gateways)
  *  • every resolved address is checked at CONNECT time (defeats DNS rebinding)
  *  • private, loopback, link-local, CGNAT, multicast and reserved ranges are refused
- *  • manual redirects (≤3), each re-validated; 5 s timeout; 256 KB cap
+ *  • manual redirects (≤3), each re-validated; 5 s timeout; size cap (256 KB for JSON)
+ *  • IPFS content is content-addressed, so a CID that one gateway refuses is retried on the others
  */
 import { lookup as dnsLookup, type LookupAddress } from "node:dns";
 import { isIP } from "node:net";
@@ -52,7 +53,41 @@ const agent = new Agent({ connect: { lookup: safeLookup as never, timeout: TIMEO
 
 export interface Gateways {
   ipfs: string;
+  /** Tried in order after `ipfs` when a gateway fails (rate limits, shutdowns). */
+  ipfsFallbacks?: string[];
   arweave?: string;
+}
+
+const IPFS_PATH = /^[A-Za-z0-9._\-/]+$/;
+/** CIDv0 (Qm…) or CIDv1 base32 (b…). */
+const CID = /^(Qm[1-9A-HJ-NP-Za-km-z]{44}|b[a-z2-7]{50,})$/;
+
+/** The `<cid>/<path>` of an IPFS URI or of any gateway URL of the form https://host/ipfs/<cid>/…, else null. */
+export function ipfsPathOf(uri: string): string | null {
+  const t = uri.trim();
+  let path: string | null = null;
+  if (t.startsWith("ipfs://")) path = t.slice("ipfs://".length).replace(/^ipfs\//, "");
+  else {
+    try {
+      const u = new URL(t);
+      if (u.protocol === "https:" && u.pathname.startsWith("/ipfs/") && !u.search) path = u.pathname.slice("/ipfs/".length);
+    } catch {
+      return null;
+    }
+  }
+  if (!path || !IPFS_PATH.test(path) || path.includes("..")) return null;
+  return CID.test(path.split("/")[0]!) ? path : null;
+}
+
+/** Every URL worth trying for `uri`, in order: IPFS content on each configured gateway, anything else as-is. */
+export function candidateUrls(uri: string, gw: Gateways): string[] {
+  const path = ipfsPathOf(uri);
+  if (!path) {
+    const one = normaliseUri(uri, gw);
+    return one ? [one] : [];
+  }
+  const gateways = [gw.ipfs, ...(gw.ipfsFallbacks ?? [])].map((g) => g.replace(/\/?$/, "/"));
+  return [...new Set(gateways.map((g) => `${g}${path}`))];
 }
 
 /** Normalise a metadata/image URI to https, or return null if it is not allowed. */
@@ -60,7 +95,7 @@ export function normaliseUri(uri: string, gw: Gateways): string | null {
   const trimmed = uri.trim();
   if (trimmed.startsWith("ipfs://")) {
     const path = trimmed.slice("ipfs://".length).replace(/^ipfs\//, "");
-    return /^[A-Za-z0-9._\-/]+$/.test(path) ? `${gw.ipfs.replace(/\/?$/, "/")}${path}` : null;
+    return IPFS_PATH.test(path) ? `${gw.ipfs.replace(/\/?$/, "/")}${path}` : null;
   }
   if (trimmed.startsWith("ar://")) {
     const id = trimmed.slice(5);
@@ -79,11 +114,30 @@ export function normaliseUri(uri: string, gw: Gateways): string | null {
 }
 
 export async function safeFetchJson(rawUrl: string, gw: Gateways): Promise<unknown> {
-  const first = normaliseUri(rawUrl, gw);
-  if (!first) throw new UnsafeUrlError("URL scheme or host not allowed");
-  let url: string = first;
+  const { body } = await safeFetchBytes(rawUrl, gw, { accept: "application/json", maxBytes: MAX_BYTES });
+  return JSON.parse(body.toString("utf8"));
+}
+
+/** Fetch an untrusted URL's bytes, trying each IPFS gateway in turn for IPFS content. */
+export async function safeFetchBytes(rawUrl: string, gw: Gateways, opts: { accept: string; maxBytes: number }): Promise<{ body: Buffer; contentType: string }> {
+  const urls = candidateUrls(rawUrl, gw);
+  if (urls.length === 0) throw new UnsafeUrlError("URL scheme or host not allowed");
+  let lastError: unknown;
+  for (const url of urls) {
+    try {
+      return await fetchOne(url, gw, opts);
+    } catch (e) {
+      if (e instanceof UnsafeUrlError) throw e;
+      lastError = e;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("Fetch failed");
+}
+
+async function fetchOne(first: string, gw: Gateways, opts: { accept: string; maxBytes: number }): Promise<{ body: Buffer; contentType: string }> {
+  let url = first;
   for (let hop = 0; hop < 4; hop++) {
-    const res = await undiciFetch(url, { dispatcher: agent, redirect: "manual", headers: { accept: "application/json" }, signal: AbortSignal.timeout(TIMEOUT_MS) });
+    const res = await undiciFetch(url, { dispatcher: agent, redirect: "manual", headers: { accept: opts.accept }, signal: AbortSignal.timeout(TIMEOUT_MS) });
     if (res.status >= 300 && res.status < 400) {
       const loc = res.headers.get("location");
       const next: string | null = loc ? normaliseUri(new URL(loc, url).toString(), gw) : null;
@@ -93,7 +147,7 @@ export async function safeFetchJson(rawUrl: string, gw: Gateways): Promise<unkno
     }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const len = Number(res.headers.get("content-length") ?? 0);
-    if (len > MAX_BYTES) throw new Error("Metadata too large");
+    if (len > opts.maxBytes) throw new Error("Response too large");
     const reader = res.body?.getReader();
     if (!reader) throw new Error("Empty body");
     const chunks: Uint8Array[] = [];
@@ -102,13 +156,27 @@ export async function safeFetchJson(rawUrl: string, gw: Gateways): Promise<unkno
       const { done, value } = await reader.read();
       if (done) break;
       total += value.byteLength;
-      if (total > MAX_BYTES) {
+      if (total > opts.maxBytes) {
         await reader.cancel();
-        throw new Error("Metadata too large");
+        throw new Error("Response too large");
       }
       chunks.push(value);
     }
-    return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+    return { body: Buffer.concat(chunks), contentType: res.headers.get("content-type") ?? "" };
   }
   throw new UnsafeUrlError("Too many redirects");
+}
+
+/**
+ * Host-specific fixes for image URLs as published by coins. Pump's Cloudflare Images account serves
+ * `coin-image/<mint>` only with a variant suffix; the bare URL returns 403.
+ */
+export function imageFetchUrl(url: string): string {
+  try {
+    const u = new URL(url);
+    if (u.hostname === "imagedelivery.net" && /^\/[A-Za-z0-9_-]+\/coin-image\/[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(u.pathname)) return `${url}/256x256`;
+  } catch {
+    // fall through
+  }
+  return url;
 }

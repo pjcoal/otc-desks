@@ -97,7 +97,7 @@ export function Explore() {
               {data.items.map((r) => (
                 <li key={r.token.mint}>
                   <Link href={`/token/${r.token.mint}`} className="flex items-center gap-3 px-4 py-3 hover:bg-hover">
-                    <TokenAvatar src={r.token.imageUrl} symbol={r.token.symbol} size={28} />
+                    <TokenAvatar mint={r.token.mint} src={r.token.imageUrl} symbol={r.token.symbol} size={28} />
                     <span className="font-medium">{r.token.symbol}</span>
                     <span className="text-muted">{r.token.name}</span>
                     <span className="num ml-auto">{r.orders7d} public orders in 7 days</span>
@@ -114,7 +114,7 @@ export function Explore() {
               {data.items.map(({ order: o, discountPct }) => (
                 <li key={o.id}>
                   <Link href={`/deal/${o.publicId}`} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 hover:bg-hover">
-                    <TokenAvatar src={o.token.imageUrl} symbol={o.token.symbol} size={24} />
+                    <TokenAvatar mint={o.token.mint} src={o.token.imageUrl} symbol={o.token.symbol} size={24} />
                     <span className="font-medium">{o.token.symbol}</span>
                     <Tokens raw={o.tokenAmountRaw} decimals={o.token.decimals} />
                     <Sol lamports={o.quoteAmountRaw} digits={3} />

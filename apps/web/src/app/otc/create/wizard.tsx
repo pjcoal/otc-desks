@@ -172,7 +172,7 @@ export function CreateWizard() {
         )}
         {t && step <= 1 && (
           <div className="flex items-center gap-3 rounded-[var(--radius-control)] border border-line p-3">
-            <TokenAvatar src={t.token.imageUrl} symbol={t.token.symbol} size={36} />
+            <TokenAvatar mint={t.token.mint} src={t.token.imageUrl} symbol={t.token.symbol} size={36} />
             <div className="min-w-0 flex-1">
               <p className="font-medium">{t.token.name} <span className="text-muted">{t.token.symbol}</span></p>
               <p className="text-[13px] text-muted">Pump price {price(t.market.priceSolPerToken)} SOL</p>

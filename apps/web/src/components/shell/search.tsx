@@ -68,7 +68,7 @@ export function Search() {
           {data && data.results.length === 0 && <p className="px-3 py-2 text-muted">{isBase58PublicKey(debounced) ? "No Pump token found at that mint on this network." : "No matches."}</p>}
           {data?.results.map((r) => (
             <Link key={r.mint} href={`/token/${r.mint}`} onClick={() => setOpen(false)} className="group flex items-center gap-2.5 px-2.5 py-1.5 hover:bg-select hover:text-white">
-              <TokenAvatar src={r.imageUrl} symbol={r.symbol} size={26} />
+              <TokenAvatar mint={r.mint} src={r.imageUrl} symbol={r.symbol} size={26} />
               <span className="min-w-0 flex-1">
                 <span className="block truncate font-medium">{r.symbol}</span>
                 <span className="block truncate text-[13px] text-muted group-hover:text-white/80">

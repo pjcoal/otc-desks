@@ -34,7 +34,7 @@ export function TokenTable({ items, emptyTitle, emptyBody, emptyAction }: { item
             <tr key={t.mint} className="border-b border-line/60 hover:bg-hover">
               <td className="px-4 py-2.5">
                 <Link href={`/token/${t.mint}`} className="flex items-center gap-2.5">
-                  <TokenAvatar src={t.imageUrl} symbol={t.symbol} size={28} />
+                  <TokenAvatar mint={t.mint} src={t.imageUrl} symbol={t.symbol} size={28} />
                   <span className="min-w-0">
                     <span className="block font-medium">{t.symbol}</span>
                     <span className="block max-w-[200px] truncate text-[13px] text-muted">{t.name}</span>

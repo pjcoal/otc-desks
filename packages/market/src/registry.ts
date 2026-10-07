@@ -98,7 +98,7 @@ export class TokenRegistry implements MarketReader {
     private readonly kv: KeyValueStore,
   ) {
     this.pump = new PumpAdapter(connection);
-    this.gw = { ipfs: config.IPFS_GATEWAY_URL };
+    this.gw = { ipfs: config.IPFS_GATEWAY_URL, ipfsFallbacks: config.IPFS_FALLBACK_GATEWAYS };
   }
 
   /** Live snapshot from chain, persisted to MarketState. */
