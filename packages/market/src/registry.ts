@@ -2,15 +2,21 @@ import { PublicKey, type Connection } from "@solana/web3.js";
 import { AppError, D, decimalToDbString } from "@app/shared";
 import { logger, type KeyValueStore, type ServerConfig } from "@app/shared/server";
 import { dec, Prisma, type Db, type MarketVenue } from "@app/database";
-import { inspectMintAccount, type MintInspection } from "@app/solana";
-import { PumpAdapter, PumpDiscoveryApi, bondingProgressBps, type DiscoveredCoin, type MarketSnapshot } from "@app/pump";
+import { inspectMintAccount, decodePythPrice, PYTH_SOL_USD_ACCOUNT, PYTH_SOL_USD_FEED_ID, type MintInspection } from "@app/solana";
+import { PumpAdapter, PumpDiscoveryApi, bondingProgressBps, type DiscoveredCoin, type DiscoverySort, type MarketSnapshot } from "@app/pump";
 import type { MarketReader, ReferencePrice, TokenInfo } from "@app/otc/server";
+import { DexScreenerApi } from "./dexscreener";
+import { listingRules, type ListingRules } from "./listing";
 import { sanitizeMetadata } from "./metadata";
 import { normaliseUri, safeFetchJson, type Gateways } from "./safe-fetch";
 
 const MPL_TOKEN_METADATA = new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s");
 const TOKEN_REFRESH_MS = 6 * 60 * 60 * 1000;
 const MARKET_FRESH_MS = 15_000;
+/** A chain snapshot older than this may be replaced by fresher discovery data (and is re-read from chain before signing). */
+const CHAIN_SNAPSHOT_KEEP_MS = 10 * 60 * 1000;
+/** Upper bound on coins whose 24h volume is refreshed per discovery run (30 per DexScreener request). */
+const VOLUME_REFRESH_LIMIT = 240;
 
 /** Minimal Metaplex metadata decode (legacy SPL Pump coins): name, symbol, uri. */
 function decodeMetaplex(data: Buffer): { name: string; symbol: string; uri: string } | null {
@@ -44,7 +50,7 @@ export interface TokenDetail {
   metadata: { description: string | null; website: string | null; twitter: string | null; telegram: string | null; uri: string | null; verifiedOnChain: boolean } | null;
   market: SerializedSnapshot;
   safety: MintInspection["safety"] & { extensions: string[]; freezeAuthority: string | null; mintAuthority: string | null; transferFeeBps: number | null };
-  stats: { volume24hLamports: string; trades24h: number; holderCount: number | null };
+  stats: { volume24hLamports: string; volume24hUsd: string | null; trades24h: number; holderCount: number | null };
 }
 
 export type SerializedSnapshot = Omit<MarketSnapshot, "supply" | "marketCapLamports" | "liquidityLamports" | "bondingCurve" | "pool"> & {
@@ -213,7 +219,8 @@ export class TokenRegistry implements MarketReader {
 
   async referencePrice(mint: string): Promise<ReferencePrice | null> {
     const m = await this.db.marketState.findUnique({ where: { mint } });
-    if (m && Date.now() - m.updatedAt.getTime() < MARKET_FRESH_MS) return { priceSolPerToken: m.priceSolPerToken.toFixed(), at: m.updatedAt, venue: m.venue };
+    // Only chain-read snapshots (slot > 0) count as fresh; discovery rows are approximations.
+    if (m && m.slot > 0n && Date.now() - m.updatedAt.getTime() < MARKET_FRESH_MS) return { priceSolPerToken: m.priceSolPerToken.toFixed(), at: m.updatedAt, venue: m.venue };
     try {
       const snap = await this.refreshMarket(mint);
       if (snap.priceSolPerToken === "0") return null;
@@ -252,7 +259,7 @@ export class TokenRegistry implements MarketReader {
         : null,
       market: serializeSnapshot(snap),
       safety: { ...insp.safety, extensions: insp.extensions, freezeAuthority: insp.freezeAuthority, mintAuthority: insp.mintAuthority, transferFeeBps: insp.transferFee?.basisPoints ?? null },
-      stats: { volume24hLamports: row.market?.volume24hLamports.toFixed() ?? "0", trades24h: row.market?.trades24h ?? 0, holderCount: row.market?.holderCount ?? null },
+      stats: { volume24hLamports: row.market?.volume24hLamports.toFixed() ?? "0", volume24hUsd: row.market?.volume24hUsd?.toFixed(2) ?? null, trades24h: row.market?.trades24h ?? 0, holderCount: row.market?.holderCount ?? null },
     };
   }
 
@@ -269,9 +276,10 @@ export class TokenRegistry implements MarketReader {
     const initialVirtualTokens = BigInt(global.initialVirtualTokenReserves.toString());
     const initialRealTokens = BigInt(global.initialRealTokenReserves.toString());
     const seen = new Map<string, DiscoveredCoin>();
-    for (const sort of ["last_trade_timestamp", "created_timestamp", "market_cap"] as const) {
+    const pages: Array<[DiscoverySort, number]> = [["last_trade_timestamp", 0], ["created_timestamp", 0], ["market_cap", 0], ["market_cap", 50]];
+    for (const [sort, offset] of pages) {
       try {
-        for (const c of await api.listCoins(sort, 50)) seen.set(c.mint, c);
+        for (const c of await api.listCoins(sort, 50, offset)) seen.set(c.mint, c);
       } catch (e) {
         logger.warn({ err: e instanceof Error ? e.message : e, sort }, "pump discovery fetch failed");
       }
@@ -287,13 +295,66 @@ export class TokenRegistry implements MarketReader {
       const existing = await this.db.token.findUnique({ where: { mint: c.mint }, select: { mint: true, isDemo: true } });
       if (existing?.isDemo) continue;
       const tokenData = { name: c.name || "Unknown", symbol: c.symbol || "???", imageUrl: image, creator: c.creator, complete: c.complete, venue: venue as MarketVenue, poolAddress: c.poolAddress, lastTradeAt: c.lastTradeAt };
-      await this.db.token.upsert({ where: { mint: c.mint }, create: { mint: c.mint, tokenProgram: "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb", decimals: c.decimals, createdAt: c.createdAt, ...tokenData }, update: tokenData });
-      const existingMarket = await this.db.marketState.findUnique({ where: { mint: c.mint }, select: { slot: true } });
-      if (existingMarket && existingMarket.slot > 0n) continue; // never overwrite chain-sourced snapshots
+      // createdAt is the coin's on-chain creation time (it drives the "recent coin" listing rule).
+      await this.db.token.upsert({ where: { mint: c.mint }, create: { mint: c.mint, tokenProgram: "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb", decimals: c.decimals, createdAt: c.createdAt, ...tokenData }, update: { ...tokenData, createdAt: c.createdAt } });
+      const existingMarket = await this.db.marketState.findUnique({ where: { mint: c.mint }, select: { slot: true, updatedAt: true } });
+      // Recent chain snapshots win. Older ones are replaced (slot 0 again), so ensureToken re-reads chain before anything signs.
+      if (existingMarket && existingMarket.slot > 0n && Date.now() - existingMarket.updatedAt.getTime() < CHAIN_SNAPSHOT_KEEP_MS) continue;
       const m = { venue: venue as MarketVenue, priceSolPerToken: new Prisma.Decimal(decimalToDbString(price)), marketCapLamports: dec(mcap), liquidityLamports: dec(0n), virtualSolReserves: dec(c.virtualSolReserves), virtualTokenReserves: dec(c.virtualTokenReserves), bondingProgressBps: progress, slot: 0n };
       await this.db.marketState.upsert({ where: { mint: c.mint }, create: { mint: c.mint, ...m }, update: m });
     }
+    await this.refreshVolumes([...seen.keys()]).catch((e) => logger.warn({ err: e instanceof Error ? e.message : e }, "volume refresh failed"));
     return { synced: seen.size };
+  }
+
+  /**
+   * 24h USD volume from the optional listing-stats source (DexScreener). Refreshes the coins that are
+   * listed on volume now (so they drop out when activity fades), then the coins just discovered.
+   */
+  private async refreshVolumes(discovered: string[]): Promise<void> {
+    if (!this.config.DEXSCREENER_API || !this.config.isMainnet) return;
+    const listedOnVolume = await this.db.marketState.findMany({
+      where: { volume24hUsd: { gte: new Prisma.Decimal(this.config.LISTING_MIN_VOLUME_USD) }, token: { isDemo: false } },
+      orderBy: { volume24hUsdAt: { sort: "asc", nulls: "first" } },
+      select: { mint: true },
+      take: VOLUME_REFRESH_LIMIT,
+    });
+    const mints = [...new Set([...listedOnVolume.map((r) => r.mint), ...discovered])].slice(0, VOLUME_REFRESH_LIMIT);
+    const known = new Set((await this.db.marketState.findMany({ where: { mint: { in: mints } }, select: { mint: true } })).map((r) => r.mint));
+    const volumes = await new DexScreenerApi(this.config.DEXSCREENER_API_URL).tokenVolumes(mints.filter((m) => known.has(m)));
+    const at = new Date();
+    // Raw SQL so the row's updatedAt (the price-freshness clock) isn't bumped by a volume-only write.
+    for (const [mint, v] of volumes) {
+      await this.db.$executeRaw`UPDATE "MarketState" SET "volume24hUsd" = ${new Prisma.Decimal(v.volume24hUsd)}, "volume24hUsdAt" = ${at} WHERE mint = ${mint}`;
+    }
+  }
+
+  /**
+   * SOL/USD from the on-chain Pyth feed (mainnet only), cached for 30 s. A last good price is kept for
+   * 6 h so a brief oracle or RPC outage doesn't blank every USD figure. Display and listing only.
+   */
+  async solUsd(): Promise<string | null> {
+    if (!this.config.isMainnet) return null;
+    const cached = await this.kv.get("price:sol-usd").catch(() => null);
+    if (cached) return cached;
+    try {
+      const info = await this.connection.getAccountInfo(PYTH_SOL_USD_ACCOUNT);
+      const p = decodePythPrice(info, { feedId: PYTH_SOL_USD_FEED_ID, nowSec: Math.floor(Date.now() / 1000), maxAgeSec: 300, maxConfBps: 200 });
+      if (p) {
+        const value = new D(p.price.toString()).mul(new D(10).pow(p.exponent)).toFixed(4);
+        await this.kv.set("price:sol-usd", value, 30).catch(() => {});
+        await this.kv.set("price:sol-usd:last", value, 6 * 3600).catch(() => {});
+        return value;
+      }
+      logger.warn("Pyth SOL/USD account missing, stale or too uncertain");
+    } catch (e) {
+      logger.warn({ err: e instanceof Error ? e.message : e }, "SOL/USD read failed");
+    }
+    return this.kv.get("price:sol-usd:last").catch(() => null);
+  }
+
+  async listingRules(): Promise<ListingRules | null> {
+    return listingRules(this.config, await this.solUsd());
   }
 
   /** E2E fixture tokens exist only in the test database and the in-process test chain. */
@@ -308,7 +369,7 @@ export class TokenRegistry implements MarketReader {
         bondingCurve: null, pool: null, slot: Number(m?.slot ?? 0), fetchedAt: (m?.updatedAt ?? new Date()).toISOString(),
       },
       safety: { ok: true, blockers: [], warnings: [], extensions: [], freezeAuthority: null, mintAuthority: null, transferFeeBps: null },
-      stats: { volume24hLamports: m?.volume24hLamports.toFixed(0) ?? "0", trades24h: m?.trades24h ?? 0, holderCount: null },
+      stats: { volume24hLamports: m?.volume24hLamports.toFixed(0) ?? "0", volume24hUsd: null, trades24h: m?.trades24h ?? 0, holderCount: null },
     };
   }
 

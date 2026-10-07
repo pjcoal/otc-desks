@@ -145,12 +145,16 @@ model MarketState {
   bondingProgressBps   Int?
   volume24hLamports    Decimal     @default(0) @db.Decimal(40, 0)
   trades24h            Int         @default(0)
+  /// 24h volume in USD from the optional listing-stats source (DexScreener). Listing/display only.
+  volume24hUsd         Decimal?    @db.Decimal(24, 2)
+  volume24hUsdAt       DateTime?
   holderCount          Int?
   slot                 BigInt
   updatedAt            DateTime    @updatedAt
 
   @@index([marketCapLamports])
   @@index([volume24hLamports])
+  @@index([volume24hUsd])
   @@index([bondingProgressBps])
 }
 

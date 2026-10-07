@@ -17,3 +17,16 @@ export function timeLeft(iso: string, now = Date.now()): string {
   if (s < 86400) return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m left`;
   return `${Math.floor(s / 86400)}d left`;
 }
+
+/** "$1.24M", "$512.3K", "$84.20". Display only (USD figures never feed into trade amounts). */
+export function formatUsd(value: Dec): string {
+  const v = value.abs();
+  const sign = value.isNeg() ? "-" : "";
+  if (v.gte(1e9)) return `${sign}$${v.div(1e9).toFixed(2, D.ROUND_DOWN)}B`;
+  if (v.gte(1e6)) return `${sign}$${v.div(1e6).toFixed(2, D.ROUND_DOWN)}M`;
+  if (v.gte(1e3)) return `${sign}$${v.div(1e3).toFixed(1, D.ROUND_DOWN)}K`;
+  return `${sign}$${v.toFixed(2, D.ROUND_DOWN)}`;
+}
+
+/** Lamports → USD at the given SOL/USD price. */
+export const lamportsToUsd = (lamports: string | bigint, solUsd: string): Dec => new D(lamports.toString()).div(1e9).mul(solUsd);

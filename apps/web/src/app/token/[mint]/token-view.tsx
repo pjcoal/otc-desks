@@ -9,6 +9,7 @@ import type { TokenDetail } from "@/lib/types";
 import { useLiveMint } from "@/components/providers/live";
 import { Address } from "@/components/ui/address";
 import { Sol, Tokens } from "@/components/ui/amount";
+import { Usd } from "@/components/ui/usd";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonClass } from "@/components/ui/button";
 import { Panel, Row } from "@/components/ui/panel";
@@ -95,9 +96,9 @@ export function TokenView({ mint }: { mint: string }) {
           {metadata?.uri && !metadata.verifiedOnChain && <p className="mt-3 text-[13px] text-warn">Off-chain metadata does not match the on-chain metadata URI. Names and images are set by the creator and can impersonate other tokens; always check the mint address.</p>}
           <dl className="mt-4 grid grid-cols-2 gap-4 border-t border-line pt-4 sm:grid-cols-3 xl:grid-cols-6">
             <Stat label="Price">{price(market.priceSolPerToken)} SOL</Stat>
-            <Stat label="Market cap"><Sol lamports={market.marketCapLamports} digits={1} /></Stat>
+            <Stat label="Market cap"><Usd lamports={market.marketCapLamports} digits={1} /></Stat>
             <Stat label={market.venue === "PUMPSWAP" ? "Pool liquidity" : "SOL in curve"}><Sol lamports={market.liquidityLamports} digits={2} /></Stat>
-            <Stat label="24h volume (indexed)"><Sol lamports={stats.volume24hLamports} digits={2} /></Stat>
+            <Stat label="24h volume"><Usd usd={stats.volume24hUsd} lamports={stats.volume24hLamports} /></Stat>
             <Stat label="24h trades">{stats.trades24h}</Stat>
             <Stat label="Holders">{stats.holderCount ?? <span className="text-faint" title="Exact holder counts are not tracked">—</span>}</Stat>
           </dl>

@@ -34,6 +34,29 @@ Verified on **2026-10-07** against `@pump-fun/pump-sdk@2.0.0`, `@pump-fun/pump-s
 
 `PUMP_DISCOVERY_API=true` lets the registry seed token lists from Pump.fun's website backend (`frontend-api-v3.pump.fun/coins`, sorted by last trade, creation and market cap), at most once a minute (Redis lock), via `packages/pump/src/discovery.ts`. That API is **unofficial and undocumented**: it can change or block traffic without notice, and it serves mainnet only. Records are validated as untrusted input (malformed, banned and NSFW records are dropped), prices are derived from its integer curve reserves, and discovery rows carry `slot = 0`. Any token page visit, or any OTC action on a discovery-only token, re-reads the mint and market from chain before anything is signed. If the API fails, lists simply stop updating.
 
+A chain snapshot younger than 10 minutes is never replaced by discovery data. An older one is replaced and reset to `slot = 0`, so the next signing path re-reads chain again.
+
+## Listing rules and USD figures (mainnet)
+
+Discovery sections (Trending, New, Near graduation, Recently graduated) and name search list only:
+
+* coins younger than `LISTING_RECENT_HOURS` (default 72) whose market cap is at least `LISTING_MIN_MCAP_USD` (default $500,000);
+* older coins with at least `LISTING_MIN_VOLUME_USD` (default $100,000) of 24h volume measured in the last 2 hours, either by DexScreener or by our own indexer;
+* coins launched through this site, always.
+
+"Launched here" and the OTC-activity sections reflect activity on this site and are not filtered. A token page is always reachable by mint, and pasting a mint into search always resolves it. On test clusters nothing is filtered and amounts stay in SOL.
+
+* **SOL/USD** comes from the on-chain Pyth sponsored feed `7UVimffxr9ow1uXYxsr4LHAcV58mLzhmwaeKvJ1pjLiE`, read through our own RPC (`packages/solana/src/pyth.ts`).
+  * The reader checks the owner program (`rec5EKMG…`), the account discriminator and the feed id. It rejects prices older than 5 minutes and confidence intervals wider than 2%.
+  * The price is cached for 30 seconds. A last good price is kept for 6 hours.
+  * Without a price, the USD floors can't be converted to lamports. Only DexScreener's USD volume rule then applies (fail closed), and the UI shows SOL.
+* **24h volume**: `DEXSCREENER_API=true` enables `packages/market/src/dexscreener.ts`.
+  * It calls the public `/tokens/v1/solana/{up to 30 mints}` endpoint after each discovery run: the coins currently listed on volume first (so they drop out when activity fades), then the coins just discovered, with at most 240 coins per run.
+  * Volume is summed over every pair where the coin is the base token, in integer cents.
+  * It is written without touching `MarketState.updatedAt`, so it can't make a price look fresh.
+
+USD figures (market cap, volume) are for display and listing only. Quotes, OTC amounts, fees and settlement are always in lamports and token base units.
+
 ## Upgrading Pump
 
 1. Bump the SDK versions in `packages/pump/package.json`.

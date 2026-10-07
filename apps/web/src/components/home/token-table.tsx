@@ -3,7 +3,7 @@ import Link from "next/link";
 import { relativeTime } from "@app/shared";
 import { bps, price } from "@/lib/format";
 import type { TokenCard } from "@/lib/types";
-import { Sol } from "@/components/ui/amount";
+import { Usd } from "@/components/ui/usd";
 import { VenueBadge } from "@/components/ui/status";
 import { TokenAvatar } from "@/components/ui/token-avatar";
 import { Empty } from "@/components/ui/skeleton";
@@ -42,8 +42,8 @@ export function TokenTable({ items, emptyTitle, emptyBody, emptyAction }: { item
                 </Link>
               </td>
               <td className="num px-2 py-2.5">{price(t.market?.priceSolPerToken)}</td>
-              <td className="px-2 py-2.5"><Sol lamports={t.market?.marketCapLamports} digits={1} /></td>
-              <td className="px-2 py-2.5"><Sol lamports={t.market?.volume24hLamports ?? "0"} digits={2} /></td>
+              <td className="px-2 py-2.5"><Usd lamports={t.market?.marketCapLamports} digits={1} /></td>
+              <td className="px-2 py-2.5"><Usd usd={t.market?.volume24hUsd} lamports={t.market?.volume24hLamports ?? "0"} /></td>
               <td className="num px-2 py-2.5 text-muted">{t.market?.bondingProgressBps !== null && t.market?.bondingProgressBps !== undefined ? bps(t.market.bondingProgressBps) : "—"}</td>
               <td className="px-2 py-2.5"><VenueBadge venue={t.venue} /></td>
               <td className="px-4 py-2.5 text-right text-muted">{relativeTime(t.createdAt)}</td>

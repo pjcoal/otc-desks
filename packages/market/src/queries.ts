@@ -1,5 +1,6 @@
 import { type Prisma, type Db } from "@app/database";
 import { isBase58PublicKey } from "@app/shared";
+import { listedWhere, type ListingRules } from "./listing";
 
 export const TIMEFRAMES = { "1m": 60, "5m": 300, "15m": 900, "1h": 3600, "4h": 14_400, "1d": 86_400 } as const;
 export type Timeframe = keyof typeof TIMEFRAMES;
@@ -67,8 +68,11 @@ const tokenCard = { mint: true, name: true, symbol: true, imageUrl: true, decima
 
 export type SearchResult = Awaited<ReturnType<typeof searchTokens>>[number];
 
-/** Mint addresses always resolve directly (exact key lookup); text search uses prefix/contains on indexed columns. */
-export async function searchTokens(db: Db, q: string, limit = 12) {
+/**
+ * Mint addresses always resolve directly (exact key lookup), listed or not. Text search uses
+ * prefix/contains on indexed columns and only returns listed coins.
+ */
+export async function searchTokens(db: Db, q: string, limit = 12, rules: ListingRules | null = null) {
   const term = q.trim().slice(0, 64);
   if (term.length === 0) return [];
   if (isBase58PublicKey(term)) {
@@ -78,7 +82,7 @@ export async function searchTokens(db: Db, q: string, limit = 12) {
   return db.token.findMany({
     where: {
       isDemo: false,
-      OR: [{ symbol: { startsWith: term, mode: "insensitive" } }, { name: { contains: term, mode: "insensitive" } }],
+      AND: [{ OR: [{ symbol: { startsWith: term, mode: "insensitive" } }, { name: { contains: term, mode: "insensitive" } }] }, listedWhere(rules)],
     },
     select: tokenCard,
     orderBy: [{ lastTradeAt: { sort: "desc", nulls: "last" } }],
@@ -88,9 +92,14 @@ export async function searchTokens(db: Db, q: string, limit = 12) {
 
 export type ExploreSection = "launched_here" | "trending" | "new" | "near_graduation" | "recently_graduated" | "most_otc" | "largest_discounts" | "largest_otc_trades";
 
-export async function explore(db: Db, section: ExploreSection, limit = 24) {
+/**
+ * Token sections apply the listing rules (see listing.ts); "launched here" and the OTC-activity
+ * sections list coins by what happened on this site and are not filtered.
+ */
+export async function explore(db: Db, section: ExploreSection, limit = 24, rules: ListingRules | null = null) {
   // `isDemo` marks end-to-end test fixtures only; they never appear in listings.
   const noFixtures = { isDemo: false };
+  const listed = { isDemo: false, ...listedWhere(rules) };
   switch (section) {
     case "launched_here":
       // Only coins created through this site's launcher (recorded after on-chain verification of the create).
@@ -107,21 +116,21 @@ export async function explore(db: Db, section: ExploreSection, limit = 24) {
       return {
         kind: "tokens" as const,
         items: await db.token.findMany({
-          where: { ...noFixtures, lastTradeAt: { gte: new Date(Date.now() - 86_400_000) } },
+          where: { ...listed, lastTradeAt: { gte: new Date(Date.now() - 86_400_000) } },
           select: tokenCard,
-          orderBy: [{ market: { volume24hLamports: "desc" } }, { lastTradeAt: "desc" }],
+          orderBy: [{ market: { volume24hUsd: { sort: "desc", nulls: "last" } } }, { market: { volume24hLamports: "desc" } }, { lastTradeAt: "desc" }],
           take: limit,
         }),
       };
     case "new":
-      return { kind: "tokens" as const, items: await db.token.findMany({ where: noFixtures, select: tokenCard, orderBy: { createdAt: "desc" }, take: limit }) };
+      return { kind: "tokens" as const, items: await db.token.findMany({ where: listed, select: tokenCard, orderBy: { createdAt: "desc" }, take: limit }) };
     case "near_graduation":
       return {
         kind: "tokens" as const,
-        items: await db.token.findMany({ where: { ...noFixtures, venue: "PUMP_BONDING_CURVE", market: { bondingProgressBps: { gte: 5000, lt: 10_000 } } }, select: tokenCard, orderBy: { market: { bondingProgressBps: "desc" } }, take: limit }),
+        items: await db.token.findMany({ where: { ...listed, venue: "PUMP_BONDING_CURVE", market: { bondingProgressBps: { gte: 5000, lt: 10_000 } } }, select: tokenCard, orderBy: { market: { bondingProgressBps: "desc" } }, take: limit }),
       };
     case "recently_graduated":
-      return { kind: "tokens" as const, items: await db.token.findMany({ where: { ...noFixtures, venue: "PUMPSWAP", graduatedAt: { not: null } }, select: tokenCard, orderBy: { graduatedAt: "desc" }, take: limit }) };
+      return { kind: "tokens" as const, items: await db.token.findMany({ where: { ...listed, venue: "PUMPSWAP", graduatedAt: { not: null } }, select: tokenCard, orderBy: { graduatedAt: "desc" }, take: limit }) };
     case "most_otc": {
       const since = new Date(Date.now() - 7 * 86_400_000);
       const grouped = await db.otcOrder.groupBy({ by: ["tokenMint"], where: { ...noFixtures, takerWallet: null, createdAt: { gte: since } }, _count: { _all: true }, orderBy: { _count: { tokenMint: "desc" } }, take: limit });

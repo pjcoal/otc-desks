@@ -83,6 +83,17 @@ export const serverEnvSchema = z
     /** Optional, unofficial discovery source (mainnet only). Prices/settlement always come from chain. */
     PUMP_DISCOVERY_API: bool(false),
     PUMP_DISCOVERY_API_URL: z.url().default("https://frontend-api-v3.pump.fun"),
+    /** Optional 24h-volume source for listings (mainnet only). Display/filtering only; never used to price trades. */
+    DEXSCREENER_API: bool(false),
+    DEXSCREENER_API_URL: z.url().default("https://api.dexscreener.com"),
+    /**
+     * Listing rules (mainnet): a coin younger than LISTING_RECENT_HOURS is listed once its market cap
+     * reaches LISTING_MIN_MCAP_USD; an older coin needs LISTING_MIN_VOLUME_USD of 24h volume.
+     * Coins launched through this site are always listed. Token pages stay reachable by mint.
+     */
+    LISTING_RECENT_HOURS: z.coerce.number().int().min(1).max(24 * 90).default(72),
+    LISTING_MIN_MCAP_USD: z.coerce.number().int().min(0).default(500_000),
+    LISTING_MIN_VOLUME_USD: z.coerce.number().int().min(0).default(100_000),
     LOG_LEVEL: z.enum(["trace", "debug", "info", "warn", "error", "fatal"]).default("info"),
     ERROR_WEBHOOK_URL: optionalString.pipe(z.url().optional()),
   })

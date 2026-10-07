@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 import { D, relativeTime } from "@app/shared";
 import type { OrderView } from "@app/otc";
 import { api } from "@/lib/api";
-import { pct, price } from "@/lib/format";
+import { formatUsd, pct, price } from "@/lib/format";
 import type { TokenCard } from "@/lib/types";
 import { Sol, Tokens } from "@/components/ui/amount";
 import { Panel } from "@/components/ui/panel";
@@ -15,6 +15,21 @@ import { Empty, ErrorNote, Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TokenAvatar } from "@/components/ui/token-avatar";
 import { TokenTable } from "@/components/home/token-table";
+import { useConfig } from "@/components/providers/config";
+
+/** Sections that list coins from across Pump (filtered); the rest list what happened on this site. */
+const FILTERED: ReadonlySet<SectionId> = new Set(["trending", "new", "near_graduation", "recently_graduated"]);
+
+function ListingNote() {
+  const { listing } = useConfig();
+  if (!listing) return null;
+  const age = listing.recentHours % 24 === 0 ? `${listing.recentHours / 24} days` : `${listing.recentHours} hours`;
+  return (
+    <p className="px-3 pb-2 text-[13px] text-muted">
+      Showing coins under {age} old with at least {formatUsd(new D(listing.minMcapUsd))} market cap, and older coins with at least {formatUsd(new D(listing.minVolumeUsd))} of 24h volume. Coins launched here are always shown. Paste a mint into Search to open any coin.
+    </p>
+  );
+}
 
 const SECTIONS = [
   { id: "launched_here", label: "Launched here" },
@@ -50,7 +65,7 @@ export function Explore() {
     let items = data.items.filter((t) => venue === "all" || (venue === "curve" ? t.venue === "PUMP_BONDING_CURVE" : t.venue === "PUMPSWAP"));
     const n = (s: string | undefined) => new D(s ?? "0");
     if (sort === "mcap") items = [...items].sort((a, b) => n(b.market?.marketCapLamports).cmp(n(a.market?.marketCapLamports)));
-    if (sort === "volume") items = [...items].sort((a, b) => n(b.market?.volume24hLamports).cmp(n(a.market?.volume24hLamports)));
+    if (sort === "volume") items = [...items].sort((a, b) => n(b.market?.volume24hUsd ?? undefined).cmp(n(a.market?.volume24hUsd ?? undefined)) || n(b.market?.volume24hLamports).cmp(n(a.market?.volume24hLamports)));
     if (sort === "new") items = [...items].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     return items;
   }, [data, sort, venue]);
@@ -74,7 +89,8 @@ export function Explore() {
       <Panel>
         {isLoading && <Skeleton className="m-4 h-64" />}
         {error && <ErrorNote className="m-4" error={error} />}
-        {data?.kind === "tokens" && <TokenTable items={tokens} emptyTitle="Nothing here yet" emptyBody="This list fills from indexed on-chain activity. We never pad it with made-up data." />}
+        {data?.kind === "tokens" && <TokenTable items={tokens} emptyTitle="Nothing here yet" emptyBody={FILTERED.has(section) ? "No coin meets the listing rules in this section right now. We never pad lists with made-up data." : "This list fills from indexed on-chain activity. We never pad it with made-up data."} />}
+        {data?.kind === "tokens" && FILTERED.has(section) && <ListingNote />}
         {data?.kind === "otc_activity" &&
           (data.items.length ? (
             <ul className="m-2 divide-y divide-line bg-ink bevel-in">

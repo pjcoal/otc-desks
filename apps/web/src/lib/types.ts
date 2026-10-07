@@ -10,7 +10,7 @@ export interface TokenCard {
   createdAt: string;
   graduatedAt: string | null;
   creator: string | null;
-  market: { priceSolPerToken: string; marketCapLamports: string; volume24hLamports: string; trades24h: number; bondingProgressBps: number | null } | null;
+  market: { priceSolPerToken: string; marketCapLamports: string; volume24hLamports: string; volume24hUsd: string | null; trades24h: number; bondingProgressBps: number | null } | null;
 }
 
 export interface Snapshot {
@@ -36,7 +36,7 @@ export interface TokenDetail {
   metadata: { description: string | null; website: string | null; twitter: string | null; telegram: string | null; uri: string | null; verifiedOnChain: boolean } | null;
   market: Snapshot;
   safety: { ok: boolean; blockers: string[]; warnings: string[]; extensions: string[]; freezeAuthority: string | null; mintAuthority: string | null; transferFeeBps: number | null };
-  stats: { volume24hLamports: string; trades24h: number; holderCount: number | null };
+  stats: { volume24hLamports: string; volume24hUsd: string | null; trades24h: number; holderCount: number | null };
 }
 
 export interface Quote {
