@@ -20,7 +20,8 @@ interface Options {
   auth?: Auth;
   rateLimit?: RateLimitRule;
   /** Builds or submits a transaction: refused on mainnet unless ALLOW_MAINNET=true. */
-  transactional?: boolean;
+  /** true: needs transactions enabled; "launch": token launches are enough (launch-only mainnet opt-in). */
+  transactional?: boolean | "launch";
 }
 
 /** JSON with bigint support. */
@@ -67,7 +68,7 @@ export function route<P = Record<string, never>>(opts: Options, handler: (c: Han
     try {
       checkOrigin(req);
       const config = getServerConfig();
-      if (opts.transactional && !config.transactionsEnabled) throw new AppError("MAINNET_DISABLED");
+      if (opts.transactional === "launch" ? !config.launchesEnabled : opts.transactional && !config.transactionsEnabled) throw new AppError("MAINNET_DISABLED");
       const session = opts.auth && opts.auth !== "none" ? await currentSession() : null;
       if ((opts.auth === "required" || opts.auth === "admin") && !session) throw new AppError("UNAUTHENTICATED");
       if (opts.auth === "admin" && !isAdmin(session?.wallet)) throw new AppError("FORBIDDEN");

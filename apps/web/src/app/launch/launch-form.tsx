@@ -18,7 +18,6 @@ import { Sol, Tokens } from "@/components/ui/amount";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/input";
 import { Panel, Row } from "@/components/ui/panel";
-import { Segmented } from "@/components/ui/segmented";
 import { ErrorNote } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
 import { SlippageControl } from "@/components/token/slippage";
@@ -44,7 +43,7 @@ export function LaunchForm() {
   const [telegram, setTelegram] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const [mode, setMode] = useState<"create" | "create_buy">("create");
+  const [mode] = useState<"create" | "create_buy">("create");
   const [initialBuy, setInitialBuy] = useState("");
   const [holderReward, setHolderReward] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
@@ -234,7 +233,7 @@ export function LaunchForm() {
         </p>
         <div className="space-y-3 border-t border-line pt-4">
           <div className="flex items-center justify-between">
-            <Segmented value={mode} onChange={setMode} options={[{ value: "create", label: "Create only" }, { value: "create_buy", label: "Create and buy" }]} />
+            <span className="text-[13px] text-muted">Create only. Buy on the coin&apos;s page once it&apos;s live.</span>
             {mode === "create_buy" && <SlippageControl value={slippageBps} onChange={setSlippageBps} />}
           </div>
           {mode === "create_buy" && (
@@ -250,8 +249,8 @@ export function LaunchForm() {
           </label>
         </div>
         <ErrorNote error={error} />
-        {!cfg.transactionsEnabled && <ErrorNote error="Launching is disabled on this deployment." />}
-        <Button size="lg" disabled={!formValid || !wallet.connected || !cfg.transactionsEnabled} loading={busy === "prepare"} onClick={() => void prepare()}>
+        {!cfg.launchesEnabled && <ErrorNote error="Launching is disabled on this deployment." />}
+        <Button size="lg" disabled={!formValid || !wallet.connected || !cfg.launchesEnabled} loading={busy === "prepare"} onClick={() => void prepare()}>
           {wallet.connected ? "Review launch" : "Connect a wallet to launch"}
         </Button>
         <p className="text-[13px] text-faint">Images are re-encoded to WebP and stored with the metadata before the token is created.</p>

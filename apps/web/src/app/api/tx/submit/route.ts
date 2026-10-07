@@ -7,14 +7,16 @@ import { decodeTransactionError, fromBase64, sha256Hex } from "@app/solana";
 import { wasPrepared } from "@/server/tx";
 import { getRpc } from "@app/solana/server";
 import { PUMP_PROGRAM_ERRORS } from "@app/pump";
+import { getServerConfig } from "@app/shared/server";
 import { route, body } from "@/server/http";
 
 /**
  * POST /api/tx/submit — relay a transaction the user's wallet already signed (used when the wallet
  * does not broadcast itself). The relay cannot alter it: any change would invalidate the signature.
  */
-export const POST = route({ auth: "required", transactional: true }, async ({ req, wallet }) => {
+export const POST = route({ auth: "required", transactional: "launch" }, async ({ req, wallet }) => {
   const input = await body(req, z.object({ signedTransactionBase64: z.string().max(4096), kind: z.enum(["BUY", "SELL", "LAUNCH"]), mint: z.string().max(64).optional() }));
+  if (input.kind !== "LAUNCH" && !getServerConfig().transactionsEnabled) throw new AppError("MAINNET_DISABLED");
   const tx = VersionedTransaction.deserialize(fromBase64(input.signedTransactionBase64));
   const payer = tx.message.staticAccountKeys[0]?.toBase58();
   if (payer !== wallet) throw new AppError("FORBIDDEN", "Only your own transactions can be relayed.");

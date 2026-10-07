@@ -12,7 +12,7 @@ import { zAddress, zSlippageBps, zU64 } from "@/server/schemas";
  * POST /api/launch/prepare — build create_v2 (Token-2022) or create_v2 + atomic first buy.
  * Only the mint PUBLIC key is sent; the mint keypair is generated and kept in the browser.
  */
-export const POST = route({ auth: "required", transactional: true }, async ({ req, wallet }) => {
+export const POST = route({ auth: "required", transactional: "launch" }, async ({ req, wallet }) => {
   const input = await body(
     req,
     z.object({
@@ -26,6 +26,8 @@ export const POST = route({ auth: "required", transactional: true }, async ({ re
     }),
   );
   if (input.mint === wallet) throw new AppError("VALIDATION", "Mint must be a fresh keypair.");
+  // create_v2 + buy exceeds Solana's 1232-byte transaction limit without an address lookup table.
+  if (BigInt(input.initialBuyLamports) > 0n) throw new AppError("VALIDATION", "Create and buy isn't available yet. Launch with Create only, then buy on the coin's page.");
   // Only metadata this site uploaded (which always links back to the site), for this wallet, name and symbol.
   const raw = await getKv().get(issuedMetadataKey(input.uri));
   const issued = raw ? (JSON.parse(raw) as IssuedMetadata) : null;

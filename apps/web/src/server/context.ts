@@ -32,6 +32,7 @@ export function publicConfig() {
     otcDomain: domainOf(c),
     rpcUrl: c.PUBLIC_SOLANA_RPC_URL,
     transactionsEnabled: c.transactionsEnabled,
+    launchesEnabled: c.launchesEnabled,
     isMainnet: c.isMainnet,
     platformFeeBps: c.OTC_PLATFORM_FEE_BPS,
     feeMode: c.OTC_FEE_MODE,

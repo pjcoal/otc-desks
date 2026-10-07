@@ -51,6 +51,8 @@ export const serverEnvSchema = z
     /** RPC endpoint handed to browsers (wallet adapter). Never put a keyed/private RPC URL here. */
     PUBLIC_SOLANA_RPC_URL: z.url().default("https://api.devnet.solana.com"),
     ALLOW_MAINNET: bool(false),
+    /** Owner opt-in for token launches only (create_v2) on mainnet, without enabling trading or OTC settlement. */
+    ALLOW_MAINNET_LAUNCHES: bool(false),
     /** Must be set to "yes" (after completing docs/mainnet-checklist.md) for ALLOW_MAINNET to take effect. */
     MAINNET_CHECKLIST_COMPLETED: optionalString,
     SIMULATE_TRANSACTIONS: bool(true),
@@ -139,6 +141,13 @@ export const serverEnvSchema = z
       if (env.SESSION_SECRET === DEV_SESSION_SECRET) issue("SESSION_SECRET", "must be set on mainnet");
       if (!env.APP_URL.startsWith("https://")) issue("APP_URL", "must be https on mainnet");
     }
+    if (env.SOLANA_CLUSTER === "mainnet-beta" && env.ALLOW_MAINNET_LAUNCHES) {
+      if (!env.SIMULATE_TRANSACTIONS) issue("SIMULATE_TRANSACTIONS", "must be true on mainnet");
+      if (!env.REDIS_URL) issue("REDIS_URL", "Redis is required for mainnet launches (rate limits, issued metadata)");
+      if (env.SESSION_SECRET === DEV_SESSION_SECRET) issue("SESSION_SECRET", "must be set on mainnet");
+      if (!env.APP_URL.startsWith("https://")) issue("APP_URL", "must be https on mainnet");
+      if (env.METADATA_PROVIDER === "local") issue("METADATA_PROVIDER", "launches on mainnet need pinata or s3 storage");
+    }
     if (env.OTC_PLATFORM_FEE_BPS > 0 && !env.PLATFORM_TREASURY_WALLET) {
       issue("PLATFORM_TREASURY_WALLET", "required when OTC_PLATFORM_FEE_BPS > 0");
     }
@@ -152,6 +161,8 @@ export type ServerConfig = z.infer<typeof serverEnvSchema> & {
   isMainnet: boolean;
   /** True when this deployment may build/submit transactions for the configured cluster. */
   transactionsEnabled: boolean;
+  /** True when token launches may be built/submitted (all transactions, or the launch-only opt-in). */
+  launchesEnabled: boolean;
   /** LAUNCH_LINK_URL or APP_URL, without a trailing slash. */
   launchLinkUrl: string;
 };
@@ -168,7 +179,7 @@ export function loadServerConfig(env: Record<string, string | undefined> = proce
   const cluster: Cluster = c.SOLANA_CLUSTER;
   const genesisHash = c.SOLANA_GENESIS_HASH ?? (cluster === "localnet" ? "" : GENESIS_HASHES[cluster]);
   const isMainnet = cluster === "mainnet-beta";
-  return { ...c, genesisHash, isMainnet, transactionsEnabled: !isMainnet || c.ALLOW_MAINNET, launchLinkUrl: (c.LAUNCH_LINK_URL ?? c.APP_URL).replace(/\/+$/, "") };
+  return { ...c, genesisHash, isMainnet, transactionsEnabled: !isMainnet || c.ALLOW_MAINNET, launchesEnabled: !isMainnet || c.ALLOW_MAINNET || c.ALLOW_MAINNET_LAUNCHES, launchLinkUrl: (c.LAUNCH_LINK_URL ?? c.APP_URL).replace(/\/+$/, "") };
 }
 
 export function getServerConfig(): ServerConfig {
