@@ -151,7 +151,7 @@ export function LaunchForm() {
           )}
           <div>
             <p className="text-[20px] font-medium">{name.trim()} <span className="text-muted">{symbol.trim()}</span></p>
-            <p className="max-w-prose text-[13px] text-muted">{description.trim() || "No description"}</p>
+            <p className="max-w-prose whitespace-pre-line text-[13px] text-muted">{description.trim() ? `${description.trim()}\n\nLaunched on ${cfg.launchLinkUrl}` : `Launched on ${cfg.launchLinkUrl}`}</p>
           </div>
         </div>
         <dl className="text-[14px]">
@@ -225,10 +225,13 @@ export function LaunchForm() {
           <Textarea id="desc" value={description} maxLength={1000} onChange={(e) => { setDescription(e.target.value); setMetadataUri(null); }} />
         </Field>
         <div className="grid gap-4 sm:grid-cols-3">
-          <Field label="Website" htmlFor="web"><Input id="web" value={website} onChange={(e) => { setWebsite(e.target.value); setMetadataUri(null); }} placeholder="https://" /></Field>
+          <Field label="Website" htmlFor="web"><Input id="web" value={website} onChange={(e) => { setWebsite(e.target.value); setMetadataUri(null); }} placeholder={`Blank: ${cfg.launchLinkUrl.replace(/^https?:\/\//, "")}`} /></Field>
           <Field label="X" htmlFor="x"><Input id="x" value={twitter} onChange={(e) => { setTwitter(e.target.value); setMetadataUri(null); }} placeholder="https://x.com/…" /></Field>
           <Field label="Telegram" htmlFor="tg"><Input id="tg" value={telegram} onChange={(e) => { setTelegram(e.target.value); setMetadataUri(null); }} placeholder="https://t.me/…" /></Field>
         </div>
+        <p className="-mt-2 text-[13px] text-muted">
+          Every coin launched here links to {cfg.launchLinkUrl.replace(/^https?:\/\//, "")}: &ldquo;Launched on {cfg.launchLinkUrl}&rdquo; is added to the end of the description, and it&apos;s recorded as the launch site. If you leave Website blank, it&apos;s used as the website too.
+        </p>
         <div className="space-y-3 border-t border-line pt-4">
           <div className="flex items-center justify-between">
             <Segmented value={mode} onChange={setMode} options={[{ value: "create", label: "Create only" }, { value: "create_buy", label: "Create and buy" }]} />

@@ -1,7 +1,9 @@
 import { PublicKey } from "@solana/web3.js";
 import { z } from "zod";
 import { AppError } from "@app/shared";
+import { getKv } from "@app/shared/server";
 import { route, body } from "@/server/http";
+import { issuedMetadataKey, type IssuedMetadata } from "@/server/launch";
 import { registry } from "@/server/context";
 import { prepareUserTransaction, serializeQuote } from "@/server/tx";
 import { zAddress, zSlippageBps, zU64 } from "@/server/schemas";
@@ -24,6 +26,12 @@ export const POST = route({ auth: "required", transactional: true }, async ({ re
     }),
   );
   if (input.mint === wallet) throw new AppError("VALIDATION", "Mint must be a fresh keypair.");
+  // Only metadata this site uploaded (which always links back to the site), for this wallet, name and symbol.
+  const raw = await getKv().get(issuedMetadataKey(input.uri));
+  const issued = raw ? (JSON.parse(raw) as IssuedMetadata) : null;
+  if (!issued || issued.wallet !== wallet || issued.name !== input.name || issued.symbol !== input.symbol) {
+    throw new AppError("VALIDATION", "Upload the token's image and details on this page first, then launch with the same name and ticker.");
+  }
   const pump = registry().pump;
   const exists = await pump.getMarket(input.mint).then(() => true, () => false);
   if (exists) throw new AppError("VALIDATION", "That mint address already exists. Generate a new mint keypair.");

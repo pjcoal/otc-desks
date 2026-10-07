@@ -19,9 +19,10 @@
 4. **Build and run**:
    * Docker: `docker build --target web -t otc-web .` and `docker build --target indexer -t otc-indexer .`
    * Vercel (web): root `apps/web`; install `npm ci` at repo root; build `npm run db:generate && npm run build -w @app/web`; set env vars. Run the indexer elsewhere.
-5. **Fund the treasury** wallet with at least the rent-exempt minimum (0.00089088 SOL) so small fee transfers succeed.
-6. **Smoke test**: `GET /api/health` (db, kv, rpc, indexer lag); sign in; post and cancel a devnet order; `MINT=<pump mint> npx tsx scripts/smoke-api.ts`.
-7. **Monitor**: `ERROR_WEBHOOK_URL` (or wire Sentry/Datadog in `apps/web/src/instrumentation.ts` and the indexer). Ship stdout JSON logs (pino) to your log store. Watch the `/admin` RPC, indexer-lag and failed-settlement panels.
+5. **Domain**: set `APP_URL` to the exact origin the site is served from (e.g. `https://www.desk404.fun`). It is the CSRF origin and part of every signed message, so change it only before orders exist. Production requests to `*.vercel.app` redirect to it. `LAUNCH_LINK_URL` (e.g. `https://desk404.fun`) is the link written into every launched coin's metadata.
+6. **Fund the treasury** wallet with at least the rent-exempt minimum (0.00089088 SOL) so small fee transfers succeed.
+7. **Smoke test**: `GET /api/health` (db, kv, rpc, indexer lag); sign in; post and cancel a devnet order; `MINT=<pump mint> npx tsx scripts/smoke-api.ts`.
+8. **Monitor**: `ERROR_WEBHOOK_URL` (or wire Sentry/Datadog in `apps/web/src/instrumentation.ts` and the indexer). Ship stdout JSON logs (pino) to your log store. Watch the `/admin` RPC, indexer-lag and failed-settlement panels.
 
 ## Region restrictions
 

@@ -41,6 +41,7 @@ export function publicConfig() {
     maxTtlSeconds: c.OTC_MAX_TTL_SECONDS,
     platformTokenMint: c.PLATFORM_TOKEN_MINT ?? null,
     priorityFeeMicroLamports: c.PRIORITY_FEE_MICROLAMPORTS,
+    launchLinkUrl: c.launchLinkUrl,
     /** Discovery listing rules (applied on mainnet only). */
     listing: c.isMainnet
       ? { recentHours: c.LISTING_RECENT_HOURS, minMcapUsd: c.LISTING_MIN_MCAP_USD, minVolumeUsd: c.LISTING_MIN_VOLUME_USD, minGlobalFeesSol: c.BIRDEYE_API_KEY && c.LISTING_MIN_GLOBAL_FEES_SOL > 0 ? c.LISTING_MIN_GLOBAL_FEES_SOL : null, qualityChecks: c.DEXSCREENER_API }

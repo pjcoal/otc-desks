@@ -35,6 +35,8 @@ export const serverEnvSchema = z
     APP_NAME: z.string().default("Desk 404"),
     APP_SYMBOL: z.string().default("DESK"),
     APP_URL: z.url().default("http://localhost:3000"),
+    /** Site link written into every launched token's metadata (createdOn, description, website fallback). Defaults to APP_URL. */
+    LAUNCH_LINK_URL: optionalString.pipe(z.url().optional()),
     SESSION_SECRET: z.string().min(32).default(DEV_SESSION_SECRET),
     SESSION_TTL_SECONDS: z.coerce.number().int().min(300).max(60 * 60 * 24 * 30).default(60 * 60 * 24 * 7),
 
@@ -148,6 +150,8 @@ export type ServerConfig = z.infer<typeof serverEnvSchema> & {
   isMainnet: boolean;
   /** True when this deployment may build/submit transactions for the configured cluster. */
   transactionsEnabled: boolean;
+  /** LAUNCH_LINK_URL or APP_URL, without a trailing slash. */
+  launchLinkUrl: string;
 };
 
 let cached: ServerConfig | undefined;
@@ -162,7 +166,7 @@ export function loadServerConfig(env: Record<string, string | undefined> = proce
   const cluster: Cluster = c.SOLANA_CLUSTER;
   const genesisHash = c.SOLANA_GENESIS_HASH ?? (cluster === "localnet" ? "" : GENESIS_HASHES[cluster]);
   const isMainnet = cluster === "mainnet-beta";
-  return { ...c, genesisHash, isMainnet, transactionsEnabled: !isMainnet || c.ALLOW_MAINNET };
+  return { ...c, genesisHash, isMainnet, transactionsEnabled: !isMainnet || c.ALLOW_MAINNET, launchLinkUrl: (c.LAUNCH_LINK_URL ?? c.APP_URL).replace(/\/+$/, "") };
 }
 
 export function getServerConfig(): ServerConfig {

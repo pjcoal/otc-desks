@@ -16,6 +16,12 @@ function origin(url: string | undefined): string {
 }
 
 export function proxy(request: NextRequest) {
+  // Production on *.vercel.app → the canonical domain (APP_URL), so sessions, CSRF checks and signed
+  // messages always use one origin. Preview deployments are left alone.
+  const canonical = origin(process.env.APP_URL);
+  if (process.env.VERCEL_ENV === "production" && canonical && request.nextUrl.hostname.endsWith(".vercel.app") && new URL(canonical).host !== request.nextUrl.host) {
+    return NextResponse.redirect(new URL(request.nextUrl.pathname + request.nextUrl.search, canonical), 308);
+  }
   const blocked = (process.env.BLOCKED_REGIONS ?? "").split(",").map((s) => s.trim().toUpperCase()).filter(Boolean);
   const country = (request.headers.get("x-vercel-ip-country") ?? request.headers.get("cf-ipcountry") ?? "").toUpperCase();
   const path = request.nextUrl.pathname;
