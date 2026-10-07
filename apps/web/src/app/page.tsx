@@ -2,6 +2,7 @@ import Link from "next/link";
 import { buttonClass } from "@/components/ui/button";
 import { Panel, TitleBar } from "@/components/ui/panel";
 import { PixelIcon, type PixelIconName } from "@/components/ui/pixel-icon";
+import { LogoLockup, LogoMark } from "@/components/ui/logo";
 import { LiveMarkets, RecentTrades } from "@/components/home/live-sections";
 import { publicConfig } from "@/server/context";
 
@@ -75,8 +76,9 @@ export default function Home() {
       <div className="min-w-0 space-y-4">
         <div className="grid items-start gap-4 xl:grid-cols-[1.15fr_1fr]">
           <Panel className="shadow-[4px_4px_0_rgba(0,0,0,0.3)]">
-            <TitleBar title={`Welcome to ${c.appName}`} icon={<PixelIcon name="legs" size={16} />} />
+            <TitleBar title={`Welcome to ${c.appName}`} icon={<LogoMark size={18} />} />
             <div className="p-5 sm:p-7">
+              <LogoLockup height={56} className="mb-6" />
               <h1 className="title-display text-[clamp(36px,6vw,64px)]">Launch on Pump. Trade size off-market.</h1>
               <p className="mt-4 max-w-[52ch] text-[17px] text-muted">Launch Pump.fun tokens and negotiate wallet-to-wallet block trades with atomic Solana settlement.</p>
               <div className="mt-6 flex flex-wrap gap-2">

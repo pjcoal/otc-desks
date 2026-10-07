@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { DropdownMenu } from "radix-ui";
 import { useConfig } from "@/components/providers/config";
 import { PixelIcon } from "@/components/ui/pixel-icon";
+import { LogoMark } from "@/components/ui/logo";
 import { WalletButton } from "@/components/wallet/wallet-button";
 import { NetworkBadge } from "./network-badge";
 import { Notifications } from "./notifications";
@@ -36,7 +37,7 @@ export function Taskbar() {
     <div className="fixed inset-x-0 bottom-0 z-40 flex h-10 items-center gap-1.5 bg-panel px-1 [box-shadow:inset_0_1px_0_var(--color-bevel-hi),inset_0_2px_0_var(--color-bevel-mid)]">
       <DropdownMenu.Root>
         <DropdownMenu.Trigger className="flex h-8 items-center gap-1.5 bg-panel px-2 font-semibold bevel-out data-[state=open]:bevel-in">
-          <PixelIcon name="legs" size={18} />
+          <LogoMark size={20} />
           Start
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
@@ -79,7 +80,7 @@ export function Taskbar() {
               </DropdownMenu.Sub>
               <DropdownMenu.Item asChild>
                 <Link href="/" className="flex items-center gap-3 px-3 py-1.5 outline-none data-[highlighted]:bg-select data-[highlighted]:text-white">
-                  <PixelIcon name="legs" size={22} />
+                  <LogoMark size={22} />
                   Show desktop
                 </Link>
               </DropdownMenu.Item>

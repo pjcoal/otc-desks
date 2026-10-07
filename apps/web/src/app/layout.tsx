@@ -14,7 +14,12 @@ const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variabl
 
 export async function generateMetadata(): Promise<Metadata> {
   const c = publicConfig();
-  return { title: { default: `${c.appName}: launch on Pump, trade size off-market`, template: `%s | ${c.appName}` }, description: "Launch Pump.fun tokens and negotiate wallet-to-wallet block trades with atomic Solana settlement.", icons: { icon: "/icon.svg" } };
+  return {
+    title: { default: `${c.appName}: launch on Pump, trade size off-market`, template: `%s | ${c.appName}` }, description: "Launch Pump.fun tokens and negotiate wallet-to-wallet block trades with atomic Solana settlement.",
+    icons: { icon: "/icon.svg" },
+    openGraph: { title: c.appName, description: "Launch on Pump. Trade size off-market.", images: [{ url: "/brand/desk404-tile-512.png", width: 512, height: 512 }] },
+    twitter: { card: "summary", title: c.appName, images: ["/brand/desk404-tile-512.png"] },
+  };
 }
 
 export const viewport: Viewport = { themeColor: "#6b7f8c", width: "device-width", initialScale: 1 };
