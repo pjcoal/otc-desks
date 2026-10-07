@@ -84,7 +84,6 @@ export default function Home() {
                 <Link href="/launch" className={buttonClass({ size: "lg" })}>Launch a token</Link>
               </div>
               {!c.isMainnet && <p className="mt-5 text-[14px] text-warn">Running on Solana {c.cluster}. Tokens and SOL here have no real-world value.</p>}
-              {c.isMainnet && !c.transactionsEnabled && <p className="mt-5 text-[14px] text-sell">Mainnet, read-only: browsing and quotes work; trading is switched off on this deployment.</p>}
             </div>
           </Panel>
           <SettlementDialog />
@@ -139,21 +138,6 @@ export default function Home() {
                 <p className="mt-2 max-w-prose pl-6 text-muted">{f.a}</p>
               </details>
             ))}
-          </div>
-        </Panel>
-
-        <Panel>
-          <TitleBar title="Risk disclosure" />
-          <div className="flex items-start gap-4 p-4">
-            <svg width="36" height="32" viewBox="0 0 12 11" shapeRendering="crispEdges" aria-hidden className="shrink-0">
-              <path fill="#1a1915" d="M5 0h2v1H5zM4 1h1v2H4zM7 1h1v2H7zM3 3h1v2H3zM8 3h1v2H8zM2 5h1v2H2zM9 5h1v2H9zM1 7h1v2H1zM10 7h1v2h-1zM0 9h1v2H0zM11 9h1v2h-1zM1 10h10v1H1z" />
-              <path fill="#e8c25a" d="M5 1h2v2H5zM4 3h4v2H4zM3 5h6v2H3zM2 7h8v2H2zM1 9h10v1H1z" />
-              <path fill="#1a1915" d="M5.5 3.5h1v3h-1zM5.5 7.5h1v1h-1z" />
-            </svg>
-            <p className="max-w-prose text-[14px] text-muted">
-              Crypto assets can be extremely volatile and can go to zero. You control your own wallet and are responsible for every transaction you sign. Market prices change constantly and displayed quotes can be stale. Reference prices are estimates, not executable values. OTC counterparties should verify all terms before signing. {c.appName} does not guarantee the value of any asset and does not provide investment advice.{" "}
-              <Link href="/risk" className="text-glacier underline">Full risk disclosure</Link>
-            </p>
           </div>
         </Panel>
       </div>

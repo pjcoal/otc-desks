@@ -49,9 +49,6 @@ export default function Docs() {
 
       <h2 id="fees">Fees</h2>
       <p>See <Link href="/fees" className="text-glacier underline">Fees</Link>. The platform fee is {c.platformFeeBps / 100}% on OTC settlements and nothing on Pump trades.</p>
-
-      <h2 id="api">API</h2>
-      <p>All endpoints are JSON under <code>/api</code>; mutating calls require a signed-in session cookie and a same-origin request. Highlights: <code>POST /api/auth/nonce</code>, <code>POST /api/auth/verify</code>, <code>GET /api/tokens/:mint</code>, <code>GET /api/quotes/buy</code>, <code>POST /api/otc/orders</code>, <code>POST /api/otc/orders/:id/counter</code>, <code>POST /api/otc/orders/:id/accept</code>, <code>POST /api/otc/settlement/prepare</code>, <code>POST /api/otc/settlement/partial-signature</code>, <code>GET /api/receipts/:signature</code>.</p>
     </article>
   );
 }
