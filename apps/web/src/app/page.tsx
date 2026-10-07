@@ -3,6 +3,7 @@ import { buttonClass } from "@/components/ui/button";
 import { Panel, TitleBar } from "@/components/ui/panel";
 import { PixelIcon, type PixelIconName } from "@/components/ui/pixel-icon";
 import { LogoLockup, LogoMark } from "@/components/ui/logo";
+import { ContractAddress } from "@/components/ui/contract-address";
 import { LiveMarkets, RecentTrades } from "@/components/home/live-sections";
 import { publicConfig } from "@/server/context";
 
@@ -85,6 +86,7 @@ export default function Home() {
                 <Link href="/otc" className={buttonClass({ size: "lg", variant: "primary" })}>Open the OTC desk</Link>
                 <Link href="/launch" className={buttonClass({ size: "lg" })}>Launch a token</Link>
               </div>
+              {c.platformTokenMint && <ContractAddress mint={c.platformTokenMint} symbol={c.appSymbol} className="mt-6 max-w-[560px]" />}
               {!c.isMainnet && <p className="mt-5 text-[14px] text-warn">Running on Solana {c.cluster}. Tokens and SOL here have no real-world value.</p>}
             </div>
           </Panel>

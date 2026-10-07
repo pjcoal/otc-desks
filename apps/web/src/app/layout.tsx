@@ -34,7 +34,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           <main className="px-2 pb-16 pt-3 sm:px-4 sm:pt-4">
             <AppWindow>{children}</AppWindow>
           </main>
-          <Footer appName={config.appName} />
+          <Footer appName={config.appName} platformTokenMint={config.platformTokenMint} appSymbol={config.appSymbol} />
           <Taskbar />
         </AppProviders>
       </body>
