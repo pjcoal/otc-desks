@@ -74,6 +74,8 @@ export const serverEnvSchema = z
     S3_PUBLIC_BASE_URL: optionalString,
     METADATA_PROVIDER: z.enum(["local", "s3", "pinata"]).default("local"),
     METADATA_API_KEY: optionalString,
+    /** Gateway written into URLs of files this site pins with Pinata (launch images and metadata, recorded on-chain). */
+    PINATA_GATEWAY_URL: z.url().default("https://gateway.pinata.cloud/ipfs/"),
     /** Primary IPFS gateway. ipfs.io and its sister gateways no longer serve plain HTTP reliably (429s). */
     IPFS_GATEWAY_URL: z.url().default("https://4everland.io/ipfs/"),
     /** Tried in order when the primary gateway fails; IPFS content is content-addressed, so any gateway is equivalent. */

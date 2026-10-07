@@ -10,7 +10,8 @@ import { getServerConfig } from "@app/shared/server";
  * Object storage for token images and metadata JSON.
  *  local  — dev only: files under apps/web/.uploads served by /api/uploads/[file]
  *  s3     — any S3-compatible store (AWS, R2, MinIO); public URL = S3_PUBLIC_BASE_URL/key
- *  pinata — IPFS pinning (METADATA_API_KEY = Pinata JWT); URL = IPFS_GATEWAY_URL + CID
+ *  pinata — IPFS pinning (METADATA_API_KEY = Pinata JWT); URL = PINATA_GATEWAY_URL + CID (the pinning
+ *           provider's own gateway serves our pins most reliably; readers also accept any /ipfs/<cid> URL)
  * Content-addressed names (sha256) make uploads idempotent and immutable.
  */
 export interface StoredObject {
@@ -50,7 +51,7 @@ export async function putObject(bytes: Uint8Array, ext: "webp" | "png" | "json",
   }
   if (provider === "pinata") {
     const cid = await putPinata(bytes, key, contentType);
-    return { url: `${c.IPFS_GATEWAY_URL.replace(/\/?$/, "/")}${cid}`, key: cid };
+    return { url: `${c.PINATA_GATEWAY_URL.replace(/\/?$/, "/")}${cid}`, key: cid };
   }
   if (c.isMainnet) throw new AppError("METADATA_UNAVAILABLE", "Local storage cannot be used on mainnet.");
   await mkdir(UPLOAD_DIR, { recursive: true });
