@@ -3,10 +3,10 @@ import { AppError, D, decimalToDbString } from "@app/shared";
 import { logger, type KeyValueStore, type ServerConfig } from "@app/shared/server";
 import { dec, Prisma, type Db, type MarketVenue } from "@app/database";
 import { inspectMintAccount, type MintInspection } from "@app/solana";
-import { PumpAdapter, type MarketSnapshot } from "@app/pump";
+import { PumpAdapter, PumpDiscoveryApi, bondingProgressBps, type DiscoveredCoin, type MarketSnapshot } from "@app/pump";
 import type { MarketReader, ReferencePrice, TokenInfo } from "@app/otc/server";
 import { sanitizeMetadata } from "./metadata";
-import { safeFetchJson, type Gateways } from "./safe-fetch";
+import { normaliseUri, safeFetchJson, type Gateways } from "./safe-fetch";
 
 const MPL_TOKEN_METADATA = new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s");
 const TOKEN_REFRESH_MS = 6 * 60 * 60 * 1000;
@@ -148,7 +148,7 @@ export class TokenRegistry implements MarketReader {
       }
     }
     const tokenData = {
-      tokenProgram: s.tokenProgram,
+      tokenProgram: s.tokenProgram, // always from the mint account owner
       decimals: s.decimals,
       // On-chain name/symbol are authoritative; off-chain JSON is display-only.
       name: (name || md?.name || "Unknown").slice(0, 64),
@@ -185,6 +185,12 @@ export class TokenRegistry implements MarketReader {
 
   async ensureToken(mint: string): Promise<TokenInfo | null> {
     let row = await this.db.token.findUnique({ where: { mint } });
+    // Discovery-only rows (MarketState.slot = 0) have not been read from chain yet: the token program
+    // and decimals must come from the mint account before anything signs against them.
+    if (row && !row.isDemo && ((await this.db.marketState.findUnique({ where: { mint }, select: { slot: true } }))?.slot ?? 0n) === 0n) {
+      await this.refreshMarket(mint);
+      row = await this.db.token.findUnique({ where: { mint } });
+    }
     if (!row) {
       let snap: MarketSnapshot;
       try {
@@ -244,6 +250,46 @@ export class TokenRegistry implements MarketReader {
       safety: { ...insp.safety, extensions: insp.extensions, freezeAuthority: insp.freezeAuthority, mintAuthority: insp.mintAuthority, transferFeeBps: insp.transferFee?.basisPoints ?? null },
       stats: { volume24hLamports: row.market?.volume24hLamports.toFixed() ?? "0", trades24h: row.market?.trades24h ?? 0, holderCount: row.market?.holderCount ?? null },
     };
+  }
+
+  /**
+   * Refresh token lists from the optional Pump discovery API (mainnet only). Runs at most once per
+   * minute across all instances (Redis lock). Discovery data seeds lists only: rows carry slot 0, and
+   * any token page visit replaces the snapshot with live chain data.
+   */
+  async syncDiscovery(): Promise<{ synced: number } | null> {
+    if (!this.config.PUMP_DISCOVERY_API || this.config.SOLANA_CLUSTER !== "mainnet-beta") return null;
+    if (!(await this.kv.setNx("discovery:lock", "1", 60))) return null;
+    const api = new PumpDiscoveryApi(this.config.PUMP_DISCOVERY_API_URL);
+    const global = await this.pump.fetchGlobal();
+    const initialVirtualTokens = BigInt(global.initialVirtualTokenReserves.toString());
+    const initialRealTokens = BigInt(global.initialRealTokenReserves.toString());
+    const seen = new Map<string, DiscoveredCoin>();
+    for (const sort of ["last_trade_timestamp", "created_timestamp", "market_cap"] as const) {
+      try {
+        for (const c of await api.listCoins(sort, 50)) seen.set(c.mint, c);
+      } catch (e) {
+        logger.warn({ err: e instanceof Error ? e.message : e, sort }, "pump discovery fetch failed");
+      }
+    }
+    for (const c of seen.values()) {
+      const image = c.imageUri ? normaliseUri(c.imageUri, this.gw) : null;
+      const venue = c.complete ? (c.poolAddress ? "PUMPSWAP" : "UNKNOWN") : "PUMP_BONDING_CURVE";
+      const real = c.realTokenReserves ?? (c.virtualTokenReserves > initialVirtualTokens - initialRealTokens ? c.virtualTokenReserves - (initialVirtualTokens - initialRealTokens) : 0n);
+      const progress = bondingProgressBps(real, initialRealTokens, c.complete);
+      // Curve coins: price from integer reserves. Graduated coins: the API's market cap is an approximation until a page refresh reads the pool.
+      const price = !c.complete && c.virtualTokenReserves > 0n ? new D(c.virtualSolReserves.toString()).div(1e9).div(new D(c.virtualTokenReserves.toString()).div(new D(10).pow(c.decimals))) : c.apiMarketCapSol ? new D(c.apiMarketCapSol).div(1e9) : new D(0);
+      const mcap = price.mul(1e9).mul(1e9).toFixed(0, D.ROUND_DOWN); // price × 1B supply, in lamports
+      const existing = await this.db.token.findUnique({ where: { mint: c.mint }, select: { mint: true, isDemo: true } });
+      if (existing?.isDemo) continue;
+      const tokenData = { name: c.name || "Unknown", symbol: c.symbol || "???", imageUrl: image, creator: c.creator, complete: c.complete, venue: venue as MarketVenue, poolAddress: c.poolAddress, lastTradeAt: c.lastTradeAt };
+      await this.db.token.upsert({ where: { mint: c.mint }, create: { mint: c.mint, tokenProgram: "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb", decimals: c.decimals, createdAt: c.createdAt, ...tokenData }, update: tokenData });
+      const existingMarket = await this.db.marketState.findUnique({ where: { mint: c.mint }, select: { slot: true } });
+      if (existingMarket && existingMarket.slot > 0n) continue; // never overwrite chain-sourced snapshots
+      const m = { venue: venue as MarketVenue, priceSolPerToken: new Prisma.Decimal(decimalToDbString(price)), marketCapLamports: dec(mcap), liquidityLamports: dec(0n), virtualSolReserves: dec(c.virtualSolReserves), virtualTokenReserves: dec(c.virtualTokenReserves), bondingProgressBps: progress, slot: 0n };
+      await this.db.marketState.upsert({ where: { mint: c.mint }, create: { mint: c.mint, ...m }, update: m });
+    }
+    return { synced: seen.size };
   }
 
   /** Demo tokens exist only in the database (DEMO_MODE); never call the chain for them. */

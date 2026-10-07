@@ -81,6 +81,9 @@ export const serverEnvSchema = z
     TRUSTED_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(1),
     DEMO_MODE: bool(false),
     INDEXER_MODE: z.enum(["firehose", "tracked"]).default("firehose"),
+    /** Optional, unofficial discovery source (mainnet only). Prices/settlement always come from chain. */
+    PUMP_DISCOVERY_API: bool(false),
+    PUMP_DISCOVERY_API_URL: z.url().default("https://frontend-api-v3.pump.fun"),
     LOG_LEVEL: z.enum(["trace", "debug", "info", "warn", "error", "fatal"]).default("info"),
     ERROR_WEBHOOK_URL: optionalString.pipe(z.url().optional()),
   })

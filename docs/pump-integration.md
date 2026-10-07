@@ -30,6 +30,10 @@ Verified on **2026-10-07** against `@pump-fun/pump-sdk@2.0.0`, `@pump-fun/pump-s
 | Events | `Program data:` logs (attributed via the invoke stack) and `emit_cpi!` inner instructions, decoded with the SDK's layout-tolerant decoders (CreateEvent, TradeEvent, CompleteEvent, CreatePoolEvent, BuyEvent, SellEvent). Failed transactions are ignored. |
 | Errors | IDL error codes mapped to user-facing codes (`TooMuchSolRequired`/`TooLittleSolReceived` → "Pump quote changed beyond your slippage setting", etc.). |
 
+## Optional discovery source (mainnet)
+
+`PUMP_DISCOVERY_API=true` lets the registry seed token lists from Pump.fun's website backend (`frontend-api-v3.pump.fun/coins`, sorted by last trade, creation and market cap), at most once a minute (Redis lock), via `packages/pump/src/discovery.ts`. That API is **unofficial and undocumented**: it can change or block traffic without notice, and it serves mainnet only. Records are validated as untrusted input (malformed, banned and NSFW records are dropped), prices are derived from its integer curve reserves, and discovery rows carry `slot = 0`. Any token page visit, or any OTC action on a discovery-only token, re-reads the mint and market from chain before anything is signed. If the API fails, lists simply stop updating.
+
 ## Upgrading Pump
 
 1. Bump the SDK versions in `packages/pump/package.json`.

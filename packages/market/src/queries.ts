@@ -93,7 +93,15 @@ export async function explore(db: Db, section: ExploreSection, includeDemo: bool
   const demo = includeDemo ? {} : { isDemo: false };
   switch (section) {
     case "trending":
-      return { kind: "tokens" as const, items: await db.token.findMany({ where: { ...demo, market: { trades24h: { gt: 0 } } }, select: tokenCard, orderBy: { market: { volume24hLamports: "desc" } }, take: limit }) };
+      return {
+        kind: "tokens" as const,
+        items: await db.token.findMany({
+          where: { ...demo, lastTradeAt: { gte: new Date(Date.now() - 86_400_000) } },
+          select: tokenCard,
+          orderBy: [{ market: { volume24hLamports: "desc" } }, { lastTradeAt: "desc" }],
+          take: limit,
+        }),
+      };
     case "new":
       return { kind: "tokens" as const, items: await db.token.findMany({ where: demo, select: tokenCard, orderBy: { createdAt: "desc" }, take: limit }) };
     case "near_graduation":

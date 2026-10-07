@@ -8,3 +8,4 @@ export * from "./errors";
 export * from "./fees";
 export * from "./adapter";
 export * from "./trade-verify";
+export * from "./discovery";
