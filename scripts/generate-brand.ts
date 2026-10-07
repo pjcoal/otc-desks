@@ -25,10 +25,7 @@ const C = {
   G: "#6bd873", // CRT green
   E: "#b8afa3", // keys
   e: "#9d958a", // key shade
-  A: "#e8a33a", // amber power LED
-  Y: "#f2d45c", // sticky note
-  y: "#d4b440", // sticky note shade
-  n: "#8a7a2c", // handwriting on the note
+  R: "#d63a2f", // power LED
 } as const;
 type Px = keyof typeof C;
 type Grid = (Px | null)[][];
@@ -42,54 +39,48 @@ function computer(): Grid {
     for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (y >= 0 && y < H && x >= 0 && x < W) g[y]![x] = c;
   };
 
-  // ── CRT monitor (faces right; depth on the left) ──
-  for (let i = 0; i < 5; i++) fill(13 - i, 6 + i, 13 - i, 27, i < 2 ? "S" : "s"); // left side face
-  for (let i = 0; i < 5; i++) fill(13 - i, 4 + i, 13 - i, 5 + i, "T"); // stepped top edge
-  fill(14, 4, 37, 5, "T"); // top face
-  fill(14, 6, 37, 27, "F"); // front face
-  fill(14, 24, 37, 27, "f");
-  fill(37, 6, 37, 27, "f"); // right edge in shade (light from the left)
-  fill(14, 27, 37, 27, "s");
-  // bezel + screen with scanlines
-  fill(17, 8, 34, 21, "B");
-  fill(17, 8, 34, 8, "b");
-  fill(17, 8, 17, 21, "b");
-  fill(18, 9, 33, 20, "K");
-  for (let y = 10; y <= 20; y += 2) fill(18, y, 33, y, "k");
-  // "404" + cursor in CRT green
+  // ── monitor box ──
+  // side face (depth to the right, stepped top edge for the 3/4 view)
+  for (let i = 0; i < 6; i++) fill(34 + i, 6 + i, 34 + i, 30, i < 2 ? "S" : "s");
+  // top face: light strip with a stepped right end
+  fill(10, 4, 33, 5, "T");
+  for (let i = 0; i < 6; i++) fill(34 + i, 4 + i, 34 + i, 5 + i, "T");
+  // front face
+  fill(10, 6, 33, 30, "F");
+  fill(10, 27, 33, 30, "f");
+  fill(10, 6, 10, 30, "T"); // left highlight edge
+  fill(11, 30, 33, 30, "s"); // underside
+  // bezel + screen
+  fill(13, 9, 30, 23, "B");
+  fill(13, 9, 30, 9, "b");
+  fill(13, 9, 13, 23, "b");
+  fill(14, 10, 29, 22, "K");
+  for (let y = 11; y <= 22; y += 2) fill(14, y, 29, y, "k");
+  // "404": 4×6 digits in CRT green
   const four = ["x..x", "x..x", "x..x", "xxxx", "...x", "...x"];
   const zero = ["xxxx", "x..x", "x..x", "x..x", "x..x", "xxxx"];
-  for (const [glyph, x0] of [
-    [four, 19],
-    [zero, 24],
-    [four, 29],
-  ] as Array<[string[], number]>)
-    glyph.forEach((row, dy) => [...row].forEach((ch, dx) => ch === "x" && (g[11 + dy]![x0 + dx] = "G")));
-  fill(19, 18, 21, 18, "G"); // cursor
-  // control buttons under the screen
-  fill(31, 24, 32, 24, "E");
-  fill(34, 24, 35, 24, "E");
-  // sticky note on the top-right corner
-  fill(32, 3, 38, 8, "Y");
-  fill(32, 8, 38, 8, "y");
-  fill(33, 4, 37, 4, "n");
-  fill(33, 6, 35, 6, "n");
-  // neck
-  fill(21, 28, 30, 29, "s");
+  const glyphs: Array<[string[], number]> = [
+    [four, 15],
+    [zero, 20],
+    [four, 25],
+  ];
+  for (const [glyph, x0] of glyphs) glyph.forEach((row, dy) => [...row].forEach((ch, dx) => ch === "x" && (g[14 + dy]![x0 + dx] = "G")));
+  // floppy slot under the screen
+  fill(15, 26, 24, 26, "K");
+  fill(15, 27, 24, 27, "s");
 
-  // ── flat desktop case underneath ──
-  for (let i = 0; i < 4; i++) fill(7 - i, 31 + i, 7 - i, 37, "s"); // left side
-  for (let i = 0; i < 4; i++) fill(7 - i, 30 + i, 7 - i, 30 + i, "T");
-  fill(8, 30, 41, 31, "T"); // top
-  fill(8, 32, 41, 37, "F"); // front
-  fill(8, 37, 41, 37, "f");
-  fill(41, 32, 41, 37, "f");
-  fill(8, 38, 41, 38, "s"); // underside
-  fill(11, 34, 22, 34, "K"); // floppy drive
-  fill(11, 35, 22, 35, "s");
-  fill(12, 33, 13, 33, "E"); // drive eject button
-  fill(33, 34, 34, 35, "E"); // power button
-  fill(37, 34, 38, 34, "A"); // amber power LED
+  // ── keyboard base in front ──
+  fill(6, 31, 39, 32, "T"); // top surface
+  fill(40, 31, 41, 34, "S"); // side
+  fill(6, 33, 39, 36, "F"); // front lip
+  fill(6, 36, 39, 36, "f");
+  fill(6, 37, 41, 37, "s"); // underside
+  fill(6, 33, 6, 36, "T");
+  for (let x = 9; x <= 31; x += 3) {
+    fill(x, 33, x + 1, 33, "E");
+    fill(x, 34, x + 1, 34, "e");
+  }
+  fill(35, 33, 36, 34, "R");
   return g;
 }
 
@@ -131,14 +122,27 @@ const padY = Math.floor((side - markH) / 2);
 const markCells = all.map((p) => ({ ...p, x: p.x - minX + padX, y: p.y - minY + padY }));
 const markSvg = svg(side, side, rects(markCells), 6);
 
-/** Avatar tile: the site's dithered desktop pattern with a short, hard drop shadow. */
+/** Avatar tile: charcoal background with a 45° long shadow cast down-right from the computer. */
 function tile(size = 64): string {
-  const ox = Math.floor((size - markW) / 2) - 1;
-  const oy = Math.floor((size - markH) / 2) - 1;
+  const ox = Math.floor((size - markW) / 2) - 3;
+  const oy = Math.floor((size - markH) / 2) - 2;
+  const obj = new Set(markCells.map((p) => `${p.x - padX + ox},${p.y - padY + oy}`));
+  const shadow: Array<{ x: number; y: number; c: string }> = [];
+  const seen = new Set<string>();
+  for (const key of obj) {
+    let [x, y] = key.split(",").map(Number) as [number, number];
+    while (x < size && y < size) {
+      x++;
+      y++;
+      const k = `${x},${y}`;
+      if (!obj.has(k) && !seen.has(k) && x < size && y < size) {
+        seen.add(k);
+        shadow.push({ x, y, c: "#232323" });
+      }
+    }
+  }
   const objCells = markCells.map((p) => ({ ...p, x: p.x - padX + ox, y: p.y - padY + oy }));
-  const shadowCells = objCells.map((p) => ({ x: p.x + 2, y: p.y + 2, c: "rgba(0,0,0,0.35)" }));
-  const dither = `<defs><pattern id="d" width="2" height="2" patternUnits="userSpaceOnUse"><rect width="2" height="2" fill="#6b7f8c"/><rect width="1" height="1" fill="#5f7380"/><rect x="1" y="1" width="1" height="1" fill="#5f7380"/></pattern></defs><rect width="${size}" height="${size}" fill="url(#d)"/>`;
-  return svg(size, size, dither + rects(shadowCells) + rects(objCells), 8);
+  return svg(size, size, `<rect width="${size}" height="${size}" fill="#191919"/>` + rects(shadow) + rects(objCells), 8);
 }
 
 /** 5×7 bitmap font for the wordmark (slashed zero, like an office terminal). */
