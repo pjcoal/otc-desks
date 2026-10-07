@@ -1,0 +1,13 @@
+node_modules
+**/node_modules
+.next
+**/.next
+.embedded-pg
+.env
+**/.env
+**/.env.local
+**/.env.*.local
+apps/web/.uploads
+apps/web/test-results
+apps/web/playwright-report
+coverage
