@@ -1,7 +1,8 @@
 /**
  * Desk 404 brand assets, drawn as pixel grids and emitted as crisp SVG (+ PNG renders via sharp).
+ * Style: 3/4-view beige office computer, shaded (no outlines), dark CRT with green "404",
+ * keyboard base with a red LED; avatar tile on charcoal with a long diagonal shadow.
  *   npx tsx scripts/generate-brand.ts
- * Outputs to apps/web/public/brand/ and apps/web/src/app/ (favicon icon.svg, apple-icon.png).
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -12,69 +13,136 @@ const OUT = join(ROOT, "apps/web/public/brand");
 mkdirSync(OUT, { recursive: true });
 
 const C = {
-  k: "#1a1915", // outline
-  p: "#dedad0", // putty case
-  h: "#fbfaf5", // bevel highlight
-  s: "#8e897d", // bevel shadow
-  n: "#1e3a5f", // screen
-  m: "#1a3253", // scanline
-  y: "#e8c25a", // token ink (bright, for the screen)
-  w: "#fbfaf5", // white
-  b: "#93b9ff", // SOL ink (bright, for the screen)
-  g: "#2e9d5f", // power LED
-  d: "#55514a", // floppy slot
-  G: "#4d6f9c", // glass glare
+  T: "#f6eee1", // top faces / highlights
+  F: "#e9dfcd", // front face
+  f: "#ddd2be", // front face, lower shade
+  S: "#c9bca6", // side face
+  s: "#b4a68f", // side face, deep shade / undersides
+  B: "#8d8780", // screen bezel
+  b: "#6f6a64", // bezel inner shade
+  K: "#141414", // screen / slot
+  k: "#1f1f1f", // screen scanline
+  G: "#6bd873", // CRT green
+  E: "#b8afa3", // keys
+  e: "#9d958a", // key shade
+  R: "#d63a2f", // power LED
 } as const;
 type Px = keyof typeof C;
+type Grid = (Px | null)[][];
 
-/** 24×24 CRT monitor showing "404". */
-function monitor(): (Px | null)[][] {
-  const W = 24;
-  const g: (Px | null)[][] = Array.from({ length: W }, () => Array<Px | null>(W).fill(null));
+const W = 48;
+const H = 44;
+
+function computer(): Grid {
+  const g: Grid = Array.from({ length: H }, () => Array<Px | null>(W).fill(null));
   const fill = (x0: number, y0: number, x1: number, y1: number, c: Px) => {
-    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) g[y]![x] = c;
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (y >= 0 && y < H && x >= 0 && x < W) g[y]![x] = c;
   };
-  // case with outline and 3D bevel
-  fill(1, 1, 22, 17, "k");
-  fill(2, 2, 21, 16, "p");
-  fill(2, 2, 21, 2, "h");
-  fill(2, 2, 2, 16, "h");
-  fill(2, 16, 21, 16, "s");
-  fill(21, 2, 21, 16, "s");
-  // sunken bezel + screen with scanlines
-  fill(4, 4, 19, 13, "n");
-  for (let y = 5; y <= 13; y += 2) fill(4, y, 19, y, "m");
-  fill(3, 3, 20, 3, "s");
-  fill(3, 3, 3, 14, "s");
-  fill(3, 14, 20, 14, "h");
-  fill(20, 3, 20, 14, "h");
-  // "404": 3×5 digits, first 4 in token ink, 0 white, last 4 in SOL ink
-  const four = ["x.x", "x.x", "xxx", "..x", "..x"];
-  const zero = ["xxx", "x.x", "x.x", "x.x", "xxx"];
-  const draw = (glyph: string[], x0: number, y0: number, c: Px) => glyph.forEach((row, dy) => [...row].forEach((ch, dx) => ch === "x" && (g[y0 + dy]![x0 + dx] = c)));
-  draw(four, 6, 6, "y");
-  draw(zero, 10, 6, "w");
-  draw(four, 14, 6, "b");
-  // floppy slot + power LED
-  fill(5, 15, 11, 15, "d");
-  g[15]![18] = "g";
-  // rounded pixel corners: case and screen (CRT glass)
-  for (const [x, y] of [[1, 1], [22, 1], [1, 17], [22, 17]] as const) g[y]![x] = null;
-  for (const [x, y] of [[2, 2], [21, 2], [2, 16], [21, 16]] as const) g[y]![x] = "k";
-  g[4]![4] = "s";
-  g[4]![19] = "s";
-  g[13]![4] = "h";
-  g[13]![19] = "h";
-  // glare on the glass, top right
-  g[5]![18] = "G";
-  g[6]![18] = "G";
-  g[5]![17] = "G";
-  // stand
-  fill(9, 18, 14, 19, "k");
-  fill(10, 18, 13, 18, "s");
-  fill(5, 20, 18, 21, "k");
-  fill(6, 20, 17, 20, "p");
+
+  // ── monitor box ──
+  // side face (depth to the right, stepped top edge for the 3/4 view)
+  for (let i = 0; i < 6; i++) fill(34 + i, 6 + i, 34 + i, 30, i < 2 ? "S" : "s");
+  // top face: light strip with a stepped right end
+  fill(10, 4, 33, 5, "T");
+  for (let i = 0; i < 6; i++) fill(34 + i, 4 + i, 34 + i, 5 + i, "T");
+  // front face
+  fill(10, 6, 33, 30, "F");
+  fill(10, 27, 33, 30, "f");
+  fill(10, 6, 10, 30, "T"); // left highlight edge
+  fill(11, 30, 33, 30, "s"); // underside
+  // bezel + screen
+  fill(13, 9, 30, 23, "B");
+  fill(13, 9, 30, 9, "b");
+  fill(13, 9, 13, 23, "b");
+  fill(14, 10, 29, 22, "K");
+  for (let y = 11; y <= 22; y += 2) fill(14, y, 29, y, "k");
+  // "404": 4×6 digits in CRT green
+  const four = ["x..x", "x..x", "x..x", "xxxx", "...x", "...x"];
+  const zero = ["xxxx", "x..x", "x..x", "x..x", "x..x", "xxxx"];
+  const glyphs: Array<[string[], number]> = [
+    [four, 15],
+    [zero, 20],
+    [four, 25],
+  ];
+  for (const [glyph, x0] of glyphs) glyph.forEach((row, dy) => [...row].forEach((ch, dx) => ch === "x" && (g[14 + dy]![x0 + dx] = "G")));
+  // floppy slot under the screen
+  fill(15, 26, 24, 26, "K");
+  fill(15, 27, 24, 27, "s");
+
+  // ── keyboard base in front ──
+  fill(6, 31, 39, 32, "T"); // top surface
+  fill(40, 31, 41, 34, "S"); // side
+  fill(6, 33, 39, 36, "F"); // front lip
+  fill(6, 36, 39, 36, "f");
+  fill(6, 37, 41, 37, "s"); // underside
+  fill(6, 33, 6, 36, "T");
+  for (let x = 9; x <= 31; x += 3) {
+    fill(x, 33, x + 1, 33, "E");
+    fill(x, 34, x + 1, 34, "e");
+  }
+  fill(35, 33, 36, 34, "R");
   return g;
+}
+
+const cells = (g: Grid, ox = 0, oy = 0) => g.flatMap((row, y) => row.flatMap((c, x) => (c ? [{ x: x + ox, y: y + oy, c: C[c] as string }] : [])));
+
+/** Merge horizontal runs of one colour into a single rect: smaller files, still pixel-exact. */
+function rects(list: Array<{ x: number; y: number; c: string }>): string {
+  const byRow = new Map<number, Array<{ x: number; c: string }>>();
+  for (const p of list) byRow.set(p.y, [...(byRow.get(p.y) ?? []), { x: p.x, c: p.c }]);
+  let out = "";
+  for (const [y, row] of [...byRow.entries()].sort((a, b) => a[0] - b[0])) {
+    row.sort((a, b) => a.x - b.x);
+    let i = 0;
+    while (i < row.length) {
+      let j = i;
+      while (j + 1 < row.length && row[j + 1]!.x === row[j]!.x + 1 && row[j + 1]!.c === row[i]!.c) j++;
+      out += `<rect x="${row[i]!.x}" y="${y}" width="${j - i + 1}" height="1" fill="${row[i]!.c}"/>`;
+      i = j + 1;
+    }
+  }
+  return out;
+}
+
+const svg = (w: number, h: number, body: string, scale = 8) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w * scale}" height="${h * scale}" shape-rendering="crispEdges" role="img" aria-label="Desk 404">${body}</svg>\n`;
+
+const grid = computer();
+// Crop to the drawn bounds for the transparent mark.
+const all = cells(grid);
+const minX = Math.min(...all.map((p) => p.x));
+const maxX = Math.max(...all.map((p) => p.x));
+const minY = Math.min(...all.map((p) => p.y));
+const maxY = Math.max(...all.map((p) => p.y));
+const markW = maxX - minX + 1;
+const markH = maxY - minY + 1;
+const side = Math.max(markW, markH);
+const padX = Math.floor((side - markW) / 2);
+const padY = Math.floor((side - markH) / 2);
+const markCells = all.map((p) => ({ ...p, x: p.x - minX + padX, y: p.y - minY + padY }));
+const markSvg = svg(side, side, rects(markCells), 6);
+
+/** Avatar tile: charcoal background with a 45° long shadow cast down-right from the computer. */
+function tile(size = 64): string {
+  const ox = Math.floor((size - markW) / 2) - 3;
+  const oy = Math.floor((size - markH) / 2) - 2;
+  const obj = new Set(markCells.map((p) => `${p.x - padX + ox},${p.y - padY + oy}`));
+  const shadow: Array<{ x: number; y: number; c: string }> = [];
+  const seen = new Set<string>();
+  for (const key of obj) {
+    let [x, y] = key.split(",").map(Number) as [number, number];
+    while (x < size && y < size) {
+      x++;
+      y++;
+      const k = `${x},${y}`;
+      if (!obj.has(k) && !seen.has(k) && x < size && y < size) {
+        seen.add(k);
+        shadow.push({ x, y, c: "#232323" });
+      }
+    }
+  }
+  const objCells = markCells.map((p) => ({ ...p, x: p.x - padX + ox, y: p.y - padY + oy }));
+  return svg(size, size, `<rect width="${size}" height="${size}" fill="#191919"/>` + rects(shadow) + rects(objCells), 8);
 }
 
 /** 5×7 bitmap font for the wordmark (slashed zero, like an office terminal). */
@@ -87,55 +155,28 @@ const FONT: Record<string, string[]> = {
   "0": [".xxx.", "x...x", "x..xx", "x.x.x", "xx..x", "x...x", ".xxx."],
   " ": ["...", "...", "...", "...", "...", "...", "..."],
 };
-
-function wordmark(text: string, colorFor: (i: number) => string): Array<{ x: number; y: number; c: string }> {
-  const px: Array<{ x: number; y: number; c: string }> = [];
+function word(text: string, colorFor: (i: number) => string, ox: number, oy: number, scale: number) {
+  const out: Array<{ x: number; y: number; c: string }> = [];
   let x = 0;
   [...text].forEach((ch, i) => {
     const glyph = FONT[ch]!;
-    glyph.forEach((row, y) => [...row].forEach((v, dx) => v === "x" && px.push({ x: x + dx, y, c: colorFor(i) })));
+    glyph.forEach((row, y) =>
+      [...row].forEach((v, dx) => {
+        if (v !== "x") return;
+        for (let sy = 0; sy < scale; sy++) for (let sx = 0; sx < scale; sx++) out.push({ x: ox + (x + dx) * scale + sx, y: oy + y * scale + sy, c: colorFor(i) });
+      }),
+    );
     x += glyph[0]!.length + 1;
   });
-  return px;
+  return { cells: out, width: x * scale };
 }
 
-/** Merge horizontal runs of the same colour into one rect: smaller, still pixel-exact. */
-function rects(cells: Array<{ x: number; y: number; c: string }>, ox = 0, oy = 0): string {
-  const byRow = new Map<number, Array<{ x: number; c: string }>>();
-  for (const p of cells) byRow.set(p.y, [...(byRow.get(p.y) ?? []), { x: p.x, c: p.c }]);
-  let out = "";
-  for (const [y, row] of [...byRow.entries()].sort((a, b) => a[0] - b[0])) {
-    row.sort((a, b) => a.x - b.x);
-    let i = 0;
-    while (i < row.length) {
-      let j = i;
-      while (j + 1 < row.length && row[j + 1]!.x === row[j]!.x + 1 && row[j + 1]!.c === row[i]!.c) j++;
-      out += `<rect x="${row[i]!.x + ox}" y="${y + oy}" width="${j - i + 1}" height="1" fill="${row[i]!.c}"/>`;
-      i = j + 1;
-    }
-  }
-  return out;
+/** Horizontal lockup: computer + "DESK 404" (404 in CRT green). */
+function lockup(dark: boolean): string {
+  const text = word("DESK 404", (i) => (i >= 5 ? (dark ? "#6bd873" : "#2f7a37") : dark ? "#f6eee1" : "#1a1915"), side + 6, Math.floor((side - 14) / 2), 2);
+  const w = side + 6 + text.width;
+  return svg(w, side, rects(markCells) + rects(text.cells), 6);
 }
-
-const gridCells = (g: (Px | null)[][]) => g.flatMap((row, y) => row.flatMap((c, x) => (c ? [{ x, y, c: C[c] }] : [])));
-const svg = (w: number, h: number, body: string, label: string) =>
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w * 8}" height="${h * 8}" shape-rendering="crispEdges" role="img" aria-label="${label}">${body}</svg>\n`;
-
-const mark = gridCells(monitor());
-const markSvg = svg(24, 24, rects(mark), "Desk 404");
-
-// Horizontal lockups: mark + wordmark ("DESK" in ink or white, "404" in screen navy / light blue).
-const lockup = (dark: boolean) => {
-  const text = wordmark("DESK 404", (i) => (i >= 5 ? (dark ? C.b : C.n) : dark ? C.w : C.k));
-  const wordW = Math.max(...text.map((p) => p.x)) + 1;
-  return svg(24 + 4 + wordW, 24, rects(mark) + rects(text, 28, 8), "Desk 404");
-};
-
-// Square app icon on a dithered desktop tile (for touch icons / social avatars).
-const tile = () => {
-  const dither = `<defs><pattern id="d" width="2" height="2" patternUnits="userSpaceOnUse"><rect width="2" height="2" fill="#6b7f8c"/><rect width="1" height="1" fill="#5f7380"/><rect x="1" y="1" width="1" height="1" fill="#5f7380"/></pattern></defs><rect width="32" height="32" fill="url(#d)"/>`;
-  return svg(32, 32, dither + rects(mark, 4, 4), "Desk 404");
-};
 
 const files: Record<string, string> = {
   "desk404-mark.svg": markSvg,
@@ -144,15 +185,16 @@ const files: Record<string, string> = {
   "desk404-tile.svg": tile(),
 };
 for (const [name, body] of Object.entries(files)) writeFileSync(join(OUT, name), body);
-
-// Favicon (Next.js app-dir convention) and raster renders, nearest-neighbour so pixels stay square.
 writeFileSync(join(ROOT, "apps/web/public/icon.svg"), markSvg);
-const png = async (svgBody: string, size: number, file: string, w = size) => {
-  await sharp(Buffer.from(svgBody), { density: 72 }).resize(w, size, { kernel: "nearest", fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toFile(file);
+
+const png = async (body: string, height: number, file: string) => {
+  const meta = /viewBox="0 0 (\d+) (\d+)"/.exec(body)!;
+  const width = Math.round((Number(meta[1]) / Number(meta[2])) * height);
+  await sharp(Buffer.from(body), { density: 72 }).resize(width, height, { kernel: "nearest" }).png().toFile(file);
 };
 await png(tile(), 180, join(ROOT, "apps/web/src/app/apple-icon.png"));
 await png(tile(), 512, join(OUT, "desk404-tile-512.png"));
 await png(markSvg, 512, join(OUT, "desk404-mark-512.png"));
-const logoW = 24 + 4 + 47;
-await png(lockup(false), 240, join(OUT, "desk404-logo-1200.png"), Math.round((240 / 24) * logoW));
+await png(lockup(false), 240, join(OUT, "desk404-logo-1200.png"));
+await png(lockup(true), 240, join(OUT, "desk404-logo-dark-1200.png"));
 console.log("Brand assets written to apps/web/public/brand");
