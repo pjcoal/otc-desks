@@ -32,8 +32,8 @@ const DEV_SESSION_SECRET = "dev-only-insecure-session-secret-change-me-0000";
 export const serverEnvSchema = z
   .object({
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-    APP_NAME: z.string().default("[MY_APP_NAME]"),
-    APP_SYMBOL: z.string().default("[MY_PLATFORM_TOKEN_SYMBOL]"),
+    APP_NAME: z.string().default("Desk 404"),
+    APP_SYMBOL: z.string().default("DESK"),
     APP_URL: z.url().default("http://localhost:3000"),
     SESSION_SECRET: z.string().min(32).default(DEV_SESSION_SECRET),
     SESSION_TTL_SECONDS: z.coerce.number().int().min(300).max(60 * 60 * 24 * 30).default(60 * 60 * 24 * 7),

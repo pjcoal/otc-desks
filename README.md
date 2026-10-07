@@ -1,4 +1,4 @@
-# [MY_APP_NAME]
+# Desk 404
 
 Launch Pump.fun tokens and negotiate wallet-to-wallet block trades with atomic Solana settlement.
 
