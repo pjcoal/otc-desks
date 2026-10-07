@@ -195,6 +195,18 @@ const png = async (body: string, height: number, file: string) => {
 await png(tile(), 180, join(ROOT, "apps/web/src/app/apple-icon.png"));
 await png(tile(), 512, join(OUT, "desk404-tile-512.png"));
 await png(markSvg, 512, join(OUT, "desk404-mark-512.png"));
+// Exact 500×500 renders (social avatars, listings): tile on a 50-px grid at 10×; mark at the largest
+// whole-number scale that fits, centred on a transparent canvas, so every pixel stays square.
+await png(tile(50), 500, join(OUT, "desk404-tile-500.png"));
+{
+  const k = Math.floor(500 / side);
+  const inset = Math.floor((500 - side * k) / 2);
+  const scaled = await sharp(Buffer.from(markSvg), { density: 72 }).resize(side * k, side * k, { kernel: "nearest" }).png().toBuffer();
+  await sharp({ create: { width: 500, height: 500, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
+    .composite([{ input: scaled, left: inset, top: inset }])
+    .png()
+    .toFile(join(OUT, "desk404-mark-500.png"));
+}
 await png(lockup(false), 240, join(OUT, "desk404-logo-1200.png"));
 await png(lockup(true), 240, join(OUT, "desk404-logo-dark-1200.png"));
 console.log("Brand assets written to apps/web/public/brand");
