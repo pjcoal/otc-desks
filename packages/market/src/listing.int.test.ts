@@ -18,7 +18,7 @@ const HOUR = 3600_000;
 const SOL_USD = "100"; // $500k market cap = 5,000 SOL; $100k volume = 1,000 SOL
 const mainnet = loadServerConfig({ SOLANA_CLUSTER: "mainnet-beta", OTC_PLATFORM_FEE_BPS: "0" });
 
-async function coin(symbol: string, o: { ageHours: number; mcapSol: number; volumeUsd?: number | null; volumeUsdAgeHours?: number; volumeSol?: number; feesSol?: number; launchedHere?: boolean }) {
+async function coin(symbol: string, o: { ageHours: number; mcapSol: number; volumeUsd?: number | null; volumeUsdAgeHours?: number; volumeSol?: number; feesSol?: number; launchedHere?: boolean; q?: { liqSol?: number; liqMcapBps?: number; sellBuyBps?: number; changeBps?: number | null } }) {
   const mint = Keypair.generate().publicKey.toBase58();
   const now = Date.now();
   await db.token.create({ data: { mint, name: symbol, symbol, decimals: 6, tokenProgram: "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb", venue: "PUMP_BONDING_CURVE", createdAt: new Date(now - o.ageHours * HOUR), lastTradeAt: new Date(now - 60_000), launchedViaPlatform: o.launchedHere ?? false } });
@@ -29,6 +29,9 @@ async function coin(symbol: string, o: { ageHours: number; mcapSol: number; volu
       volume24hUsd: o.volumeUsd === undefined || o.volumeUsd === null ? null : String(o.volumeUsd),
       volume24hUsdAt: o.volumeUsd === undefined || o.volumeUsd === null ? null : new Date(now - (o.volumeUsdAgeHours ?? 0) * HOUR),
       ...(o.feesSol === undefined ? {} : { globalFeesLamports: dec(BigInt(o.feesSol) * 1_000_000_000n), globalFeesAt: new Date(now) }),
+      ...(o.q === undefined
+        ? {}
+        : { volume24hUsd: String(o.volumeUsd ?? 0), volume24hUsdAt: new Date(now), liquiditySolLamports: dec(BigInt(o.q.liqSol ?? 500) * 1_000_000_000n), liquidityMcapBps: o.q.liqMcapBps ?? 500, sellBuyBps: o.q.sellBuyBps ?? 9000, priceChange24hBps: o.q.changeBps === undefined ? 1000 : o.q.changeBps }),
     },
   });
   return mint;
@@ -63,6 +66,20 @@ describe("listing rules", () => {
     expect(await symbols("new", listingRules(withFees, SOL_USD))).toEqual(["OLDPAID", "OWNCOIN", "RECENTPAID"]);
     // Without a key the rule is off.
     expect(await symbols("new")).toEqual(["OLDCHEAP", "OLDPAID", "OWNCOIN", "RECENTCHEAP", "RECENTPAID", "RECENTUNKNOWN"]);
+  });
+
+  it("with chart-quality checks on, hides thin pools, inflated caps, one-sided buying, crashes and stale data", async () => {
+    await coin("REAL", { ageHours: 10, mcapSol: 6000, q: {} });
+    await coin("REALOLD", { ageHours: 24 * 30, mcapSol: 900, volumeUsd: 300_000, q: { sellBuyBps: 2500, changeBps: -7500 } });
+    await coin("NOCHANGE", { ageHours: 10, mcapSol: 6000, q: { changeBps: null } });
+    await coin("THINPOOL", { ageHours: 10, mcapSol: 6000, q: { liqSol: 49 } });
+    await coin("INFLATED", { ageHours: 10, mcapSol: 6000, q: { liqMcapBps: 149 } });
+    await coin("BOTBUYS", { ageHours: 24 * 5, mcapSol: 900, volumeUsd: 300_000, q: { sellBuyBps: 800 } });
+    await coin("RUGGED", { ageHours: 24 * 5, mcapSol: 900, volumeUsd: 300_000, q: { changeBps: -9000 } });
+    await coin("NODATA", { ageHours: 10, mcapSol: 6000 });
+    await coin("OWNCOIN", { ageHours: 24 * 9, mcapSol: 30, launchedHere: true });
+    const quality = loadServerConfig({ SOLANA_CLUSTER: "mainnet-beta", OTC_PLATFORM_FEE_BPS: "0", DEXSCREENER_API: "true" });
+    expect(await symbols("new", listingRules(quality, SOL_USD))).toEqual(["NOCHANGE", "OWNCOIN", "REAL", "REALOLD"]);
   });
 
   it("fails closed without a SOL/USD price: only USD-measured volume and own coins qualify", async () => {

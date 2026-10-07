@@ -27,7 +27,8 @@ function ListingNote() {
   return (
     <p className="px-3 pb-2 text-[13px] text-muted">
       Showing coins under {age} old with at least {formatUsd(new D(listing.minMcapUsd))} market cap, and older coins with at least {formatUsd(new D(listing.minVolumeUsd))} of 24h volume
-      {listing.minGlobalFeesSol !== null && <>, that have paid at least {listing.minGlobalFeesSol} SOL in global fees</>}. Coins launched here are always shown. Paste a mint into Search to open any coin.
+      {listing.minGlobalFeesSol !== null && <>, that have paid at least {listing.minGlobalFeesSol} SOL in global fees</>}.
+      {listing.qualityChecks && " Coins that look rugged or faked are hidden: thin pools, liquidity far below market cap, one-sided buying, or a crash in the last 24 hours."} Coins launched here are always shown. Paste a mint into Search to open any coin.
     </p>
   );
 }

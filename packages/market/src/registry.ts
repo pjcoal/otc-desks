@@ -318,19 +318,30 @@ export class TokenRegistry implements MarketReader {
    */
   private async refreshVolumes(discovered: string[]): Promise<void> {
     if (!this.config.DEXSCREENER_API || !this.config.isMainnet) return;
-    const listedOnVolume = await this.db.marketState.findMany({
-      where: { volume24hUsd: { gte: new Prisma.Decimal(this.config.LISTING_MIN_VOLUME_USD) }, token: { isDemo: false } },
-      orderBy: { volume24hUsdAt: { sort: "asc", nulls: "first" } },
-      select: { mint: true },
-      take: VOLUME_REFRESH_LIMIT,
-    });
-    const mints = [...new Set([...listedOnVolume.map((r) => r.mint), ...discovered])].slice(0, VOLUME_REFRESH_LIMIT);
+    // Coins that pass (or recently passed) the market-cap/volume rules first, stalest first, so listed
+    // coins keep fresh signals and drop out when they fade or rug; then the coins just discovered.
+    const rules = await this.listingRules();
+    const listed = rules
+      ? await this.db.token.findMany({
+          where: { isDemo: false, launchedViaPlatform: false, ...listedWhere({ ...rules, quality: null, minGlobalFeesLamports: null }) },
+          orderBy: { market: { volume24hUsdAt: { sort: "asc", nulls: "first" } } },
+          select: { mint: true },
+          take: VOLUME_REFRESH_LIMIT,
+        })
+      : [];
+    const mints = [...new Set([...listed.map((r) => r.mint), ...discovered])].slice(0, VOLUME_REFRESH_LIMIT);
     const known = new Set((await this.db.marketState.findMany({ where: { mint: { in: mints } }, select: { mint: true } })).map((r) => r.mint));
-    const volumes = await new DexScreenerApi(this.config.DEXSCREENER_API_URL).tokenVolumes(mints.filter((m) => known.has(m)));
+    const stats = await new DexScreenerApi(this.config.DEXSCREENER_API_URL).tokenVolumes(mints.filter((m) => known.has(m)));
     const at = new Date();
-    // Raw SQL so the row's updatedAt (the price-freshness clock) isn't bumped by a volume-only write.
-    for (const [mint, v] of volumes) {
-      await this.db.$executeRaw`UPDATE "MarketState" SET "volume24hUsd" = ${new Prisma.Decimal(v.volume24hUsd)}, "volume24hUsdAt" = ${at} WHERE mint = ${mint}`;
+    // Raw SQL so the row's updatedAt (the price-freshness clock) isn't bumped by a stats-only write.
+    for (const [mint, v] of stats) {
+      const sellBuyBps = v.buys24h > 0 ? Math.min(1_000_000, Math.floor((v.sells24h * 10_000) / v.buys24h)) : v.sells24h > 0 ? 1_000_000 : 0;
+      await this.db.$executeRaw`UPDATE "MarketState" SET
+        "volume24hUsd" = ${new Prisma.Decimal(v.volume24hUsd)}, "volume24hUsdAt" = ${at},
+        "liquidityUsd" = ${new Prisma.Decimal(v.liquidityUsd)}, "liquiditySolLamports" = ${new Prisma.Decimal(v.liquiditySolLamports.toString())},
+        "liquidityMcapBps" = ${v.liquidityMcapBps}, "buys24h" = ${v.buys24h}, "sells24h" = ${v.sells24h}, "sellBuyBps" = ${sellBuyBps},
+        "priceChange24hBps" = ${v.priceChange24hBps}
+        WHERE mint = ${mint}`;
     }
   }
 

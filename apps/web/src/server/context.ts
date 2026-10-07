@@ -43,7 +43,7 @@ export function publicConfig() {
     priorityFeeMicroLamports: c.PRIORITY_FEE_MICROLAMPORTS,
     /** Discovery listing rules (applied on mainnet only). */
     listing: c.isMainnet
-      ? { recentHours: c.LISTING_RECENT_HOURS, minMcapUsd: c.LISTING_MIN_MCAP_USD, minVolumeUsd: c.LISTING_MIN_VOLUME_USD, minGlobalFeesSol: c.BIRDEYE_API_KEY && c.LISTING_MIN_GLOBAL_FEES_SOL > 0 ? c.LISTING_MIN_GLOBAL_FEES_SOL : null }
+      ? { recentHours: c.LISTING_RECENT_HOURS, minMcapUsd: c.LISTING_MIN_MCAP_USD, minVolumeUsd: c.LISTING_MIN_VOLUME_USD, minGlobalFeesSol: c.BIRDEYE_API_KEY && c.LISTING_MIN_GLOBAL_FEES_SOL > 0 ? c.LISTING_MIN_GLOBAL_FEES_SOL : null, qualityChecks: c.DEXSCREENER_API }
       : null,
   };
 }

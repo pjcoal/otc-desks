@@ -101,6 +101,16 @@ export const serverEnvSchema = z
     LISTING_RECENT_HOURS: z.coerce.number().int().min(1).max(24 * 90).default(72),
     LISTING_MIN_MCAP_USD: z.coerce.number().int().min(0).default(500_000),
     LISTING_MIN_VOLUME_USD: z.coerce.number().int().min(0).default(100_000),
+    /**
+     * Chart-quality rules (need DEXSCREENER_API): filter out rugs and faked charts. A listed coin's
+     * pools must hold LISTING_MIN_LIQUIDITY_SOL, liquidity must be at least LISTING_MIN_LIQ_MCAP_PCT of
+     * market cap (inflated caps on thin pools), 24h sells at least LISTING_MIN_SELL_BUY_RATIO of buys
+     * (one-sided bot buying), and the price must not have fallen more than LISTING_MAX_DROP_24H_PCT in 24h.
+     */
+    LISTING_MIN_LIQUIDITY_SOL: z.coerce.number().min(0).max(1_000_000).default(50),
+    LISTING_MIN_LIQ_MCAP_PCT: z.coerce.number().min(0).max(100).default(1.5),
+    LISTING_MIN_SELL_BUY_RATIO: z.coerce.number().min(0).max(10).default(0.25),
+    LISTING_MAX_DROP_24H_PCT: z.coerce.number().min(0).max(100).default(75),
     /** All-time global fees paid (SOL) a listed coin needs. Applied only when BIRDEYE_API_KEY is set; 0 disables. */
     LISTING_MIN_GLOBAL_FEES_SOL: z.coerce.number().min(0).max(1_000_000).default(50),
     /** Birdeye Data API key (Business plan or higher: global-fees endpoints). Server-only; never sent to browsers. */

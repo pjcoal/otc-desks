@@ -148,6 +148,15 @@ model MarketState {
   /// 24h volume in USD from the optional listing-stats source (DexScreener). Listing/display only.
   volume24hUsd         Decimal?    @db.Decimal(24, 2)
   volume24hUsdAt       DateTime?
+  /// Chart-quality signals from the same source and refresh (volume24hUsdAt). Listing only.
+  liquidityUsd         Decimal?    @db.Decimal(24, 2)
+  liquiditySolLamports Decimal?    @db.Decimal(40, 0)
+  liquidityMcapBps     Int?
+  buys24h              Int?
+  sells24h             Int?
+  /// sells24h / buys24h in basis points (stored so it can be filtered on).
+  sellBuyBps           Int?
+  priceChange24hBps    Int?
   /// All-time "global fees paid" by traders (platform + priority + tips + network), from Birdeye. Listing only.
   globalFeesLamports   Decimal?    @db.Decimal(40, 0)
   globalFeesAt         DateTime?

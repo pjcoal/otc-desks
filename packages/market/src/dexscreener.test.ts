@@ -4,7 +4,11 @@ import { DexScreenerApi } from "./dexscreener";
 
 const A = "9d24jNVbvHQH3pCB1ZzxRjpFuVV4j1MMJDU3SPxQpump";
 const B = "2rXTptX8axpo1c8KJ4WPL2VusxyFGGckUZ9UErs7QPvp";
-const pair = (base: string, addr: string, vol: number, extra: object = {}) => ({ chainId: "solana", dexId: "pumpswap", pairAddress: addr, baseToken: { address: base }, volume: { h24: vol }, liquidity: { usd: 1000.5 }, ...extra });
+const WSOL = "So11111111111111111111111111111111111111112";
+const pair = (base: string, addr: string, vol: number, extra: object = {}) => ({
+  chainId: "solana", dexId: "pumpswap", pairAddress: addr, baseToken: { address: base }, quoteToken: { address: WSOL },
+  volume: { h24: vol }, liquidity: { usd: 1000.5, quote: 4.5 }, txns: { h24: { buys: 100, sells: 40 } }, priceChange: { h24: -12.5 }, marketCap: 40_000, ...extra,
+});
 
 afterEach(() => vi.unstubAllGlobals());
 const stub = (body: unknown, status = 200) => {
@@ -25,8 +29,8 @@ describe("DexScreener adapter (untrusted input)", () => {
       pair("So11111111111111111111111111111111111111112", "pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA", 999), // coin is the quote side
     ]);
     const v = await new DexScreenerApi("https://example.test").tokenVolumes([A, B]);
-    expect(v.get(A)).toEqual({ volume24hUsd: "150000.30", liquidityUsd: "2001.00", pairs: 2 });
-    expect(v.get(B)).toEqual({ volume24hUsd: "0.00", liquidityUsd: "0.00", pairs: 0 });
+    expect(v.get(A)).toEqual({ volume24hUsd: "150000.30", liquidityUsd: "2001.00", liquiditySolLamports: 9_000_000_000n, liquidityMcapBps: 500, buys24h: 200, sells24h: 80, priceChange24hBps: -1250, pairs: 2 });
+    expect(v.get(B)).toEqual({ volume24hUsd: "0.00", liquidityUsd: "0.00", liquiditySolLamports: 0n, liquidityMcapBps: null, buys24h: 0, sells24h: 0, priceChange24hBps: null, pairs: 0 });
   });
   it("batches 30 addresses per request", async () => {
     const f = stub([]);

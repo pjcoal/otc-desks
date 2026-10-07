@@ -44,6 +44,17 @@ Discovery sections (Trending, New, Near graduation, Recently graduated) and name
 * older coins with at least `LISTING_MIN_VOLUME_USD` (default $100,000) of 24h volume measured in the last 2 hours, either by DexScreener or by our own indexer;
 * coins launched through this site, always.
 
+With `DEXSCREENER_API=true`, recent and older coins must also pass chart-quality checks that hide rugs and faked charts. Every signal comes from DexScreener, refreshed each discovery run (the coins currently passing the rules first, stalest first), and must be less than 2 hours old.
+
+| Check | Default | Catches |
+| --- | --- | --- |
+| SOL in the coin's SOL-quoted pools | ≥ `LISTING_MIN_LIQUIDITY_SOL` (50) | Thin or non-SOL pools |
+| Liquidity ÷ market cap | ≥ `LISTING_MIN_LIQ_MCAP_PCT` (1.5%) | Inflated caps on tiny pools (the stablecoin-lookalike pattern: ~0.3–1%) |
+| 24h sells ÷ buys | ≥ `LISTING_MIN_SELL_BUY_RATIO` (0.25) | One-sided bot buying (fakes: 0–9%; organic coins: 30–120%) |
+| 24h price change of the deepest pool | ≥ −`LISTING_MAX_DROP_24H_PCT` (−75%) | Fresh rugs, whose dump volume would otherwise pass the volume rule |
+
+The defaults were calibrated on 2026-10-07 against the 48 coins that then passed the market-cap and volume rules: all 22 lookalike or rugged charts failed at least one check, and all 26 organic ones passed.
+
 When `BIRDEYE_API_KEY` is set (Birdeye Business plan or higher), recent and older coins must also have paid at least `LISTING_MIN_GLOBAL_FEES_SOL` (default 50 SOL) in all-time "global fees". This is the sum of trading-platform fees, priority fees, tips and network fees paid by everyone who traded the coin, read from Birdeye's `GET /defi/v3/token/fee/multiple`.
 * Only coins that already pass the other rules are checked, in batches of 50.
 * All-time fees only grow, so a coin at or above the floor is never checked again. A coin below it is re-checked every 15 minutes.
