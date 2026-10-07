@@ -1,83 +1,152 @@
 @import "tailwindcss";
 
 /*
- * Design tokens. Amounts are coloured by settlement leg: brass = token quantities, glacier = SOL.
- * Teal / rose mark buy / sell. Everything else stays quiet so those numbers carry the page.
+ * "Office computer, early 90s." Putty windows on a dithered desktop, bevelled controls, navy title
+ * bars, pixel type. Settlement legs keep their own inks: token amounts in brown-gold, SOL in blue,
+ * buys and sells in ledger green and red. Token names keep Tailwind class names stable across themes.
  */
 @theme {
-  --color-ink: #0e1320;
-  --color-panel: #151b2b;
-  --color-raised: #1c2336;
-  --color-hover: #232b41;
-  --color-line: #2a3349;
-  --color-line-strong: #3a4562;
-  --color-text: #e8ecf4;
-  --color-muted: #8a94ab;
-  --color-faint: #5d6782;
-  --color-brass: #d9b26a;
-  --color-brass-dim: #3a3121;
-  --color-glacier: #93b9ff;
-  --color-glacier-dim: #1f2b47;
-  --color-buy: #4fc9a8;
-  --color-buy-dim: #173a35;
-  --color-sell: #ee7189;
-  --color-sell-dim: #43202b;
-  --color-warn: #f0b45b;
-  --color-warn-dim: #3d2d16;
+  --color-desk: #6b7f8c;
+  --color-desk-dark: #5f7380;
+  --color-ink: #fbfaf5; /* paper: fields, tables, document bodies */
+  --color-panel: #dedad0; /* putty window face */
+  --color-raised: #cfcabe;
+  --color-hover: #e9e5da;
+  --color-line: #b9b3a6;
+  --color-line-strong: #8e897d;
+  --color-text: #1a1915;
+  --color-muted: #55514a;
+  --color-faint: #7d786d;
+  --color-title: #1e3a5f;
+  --color-title-inactive: #8e897d;
+  --color-select: #1e3a5f;
+  --color-brass: #7a4f00;
+  --color-brass-dim: #efe0bd;
+  --color-glacier: #1c4e8c;
+  --color-glacier-dim: #d3dff0;
+  --color-buy: #1d6b37;
+  --color-buy-dim: #d6ead3;
+  --color-sell: #a3261b;
+  --color-sell-dim: #f2d4cf;
+  --color-warn: #7a5200;
+  --color-warn-dim: #f3e3b5;
+  --color-bevel-hi: #ffffff;
+  --color-bevel-mid: #f2efe7;
+  --color-bevel-lo: #8e897d;
+  --color-bevel-dk: #2f2d29;
 
-  --font-sans: var(--font-schibsted), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-instrument), ui-serif, Georgia, serif;
+  --font-sans: var(--font-pixel), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-pixel), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, monospace;
 
-  --radius-panel: 10px;
-  --radius-control: 7px;
-  --radius-chip: 4px;
+  --radius-panel: 0px;
+  --radius-control: 0px;
+  --radius-chip: 0px;
 }
 
 @layer base {
   html {
-    color-scheme: dark;
-    background: var(--color-ink);
+    color-scheme: light;
+    background: var(--color-desk);
   }
   body {
-    background: var(--color-ink);
+    /* 2×2 dither, like a 16-colour desktop pattern */
+    background-color: var(--color-desk);
+    background-image: repeating-conic-gradient(var(--color-desk-dark) 0% 25%, transparent 0% 50%);
+    background-size: 4px 4px;
     color: var(--color-text);
     font-family: var(--font-sans);
-    font-size: 14px;
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
+    font-size: 15px;
+    line-height: 1.45;
+    -webkit-font-smoothing: none;
+    -moz-osx-font-smoothing: unset;
+    font-smooth: never;
   }
   ::selection {
-    background: var(--color-glacier-dim);
+    background: var(--color-select);
+    color: #fff;
   }
   :focus-visible {
-    outline: 2px solid var(--color-glacier);
-    outline-offset: 2px;
-    border-radius: 4px;
+    outline: 1px dotted var(--color-text);
+    outline-offset: -4px;
   }
   input[type="number"]::-webkit-inner-spin-button {
     -webkit-appearance: none;
   }
+  input[type="checkbox"] {
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background: var(--color-ink);
+    box-shadow: inset 1px 1px 0 var(--color-bevel-lo), inset -1px -1px 0 var(--color-bevel-hi), inset 2px 2px 0 var(--color-bevel-dk);
+    display: inline-grid;
+    place-content: center;
+    flex-shrink: 0;
+  }
+  input[type="checkbox"]:checked::after {
+    content: "";
+    width: 8px;
+    height: 8px;
+    background: var(--color-text);
+    clip-path: polygon(0 50%, 15% 35%, 40% 60%, 85% 10%, 100% 25%, 40% 90%);
+  }
 }
 
 @layer components {
+  /* Raised 3D bevel (windows, buttons). */
+  .bevel-out {
+    box-shadow:
+      inset -1px -1px 0 var(--color-bevel-dk),
+      inset 1px 1px 0 var(--color-bevel-hi),
+      inset -2px -2px 0 var(--color-bevel-lo),
+      inset 2px 2px 0 var(--color-bevel-mid);
+  }
+  /* Sunken bevel (fields, lists, pressed buttons). */
+  .bevel-in {
+    box-shadow:
+      inset 1px 1px 0 var(--color-bevel-lo),
+      inset -1px -1px 0 var(--color-bevel-hi),
+      inset 2px 2px 0 var(--color-bevel-dk),
+      inset -2px -2px 0 var(--color-bevel-mid);
+  }
+  /* A window / group box: putty face with raised bevel. */
   .panel {
     background: var(--color-panel);
-    border: 1px solid var(--color-line);
-    border-radius: var(--radius-panel);
+    box-shadow:
+      inset -1px -1px 0 var(--color-bevel-dk),
+      inset 1px 1px 0 var(--color-bevel-hi),
+      inset -2px -2px 0 var(--color-bevel-lo),
+      inset 2px 2px 0 var(--color-bevel-mid);
+    padding: 3px;
   }
-  /*
-   * Schibsted Grotesk's tabular figures also give "," and "." a digit's width, which reads as
-   * "5 , 000". Numbers stay proportional; columns align by right-alignment instead.
-   */
+  .panel > .panel-body {
+    background: var(--color-panel);
+  }
+  .titlebar {
+    background: var(--color-title);
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
   .num {
-    font-variant-numeric: lining-nums;
+    font-variant-numeric: lining-nums tabular-nums;
   }
   .title-display {
     font-family: var(--font-display);
-    font-weight: 400;
+    font-weight: 600;
     letter-spacing: -0.01em;
     line-height: 1.05;
+  }
+  /* Typed-memo body for long documents (docs, terms, risk). */
+  .memo {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* Segmented "chunk" progress bar. */
+  .chunks {
+    background-image: repeating-linear-gradient(90deg, var(--color-select) 0 9px, transparent 9px 12px);
   }
 }
 
@@ -91,19 +160,23 @@
   }
 }
 
-/* The landing hero's two legs converging into one transaction — the page's single orchestrated motion. */
+/* Landing: the settlement dialog's two legs slide in once and lock together. */
 @keyframes leg-in-left {
-  from { transform: translateX(-24px); opacity: 0; }
+  from { transform: translateX(-16px); opacity: 0; }
   to { transform: none; opacity: 1; }
 }
 @keyframes leg-in-right {
-  from { transform: translateX(24px); opacity: 0; }
+  from { transform: translateX(16px); opacity: 0; }
   to { transform: none; opacity: 1; }
 }
 @keyframes seal {
-  0%, 60% { opacity: 0; transform: scaleX(0.2); }
-  100% { opacity: 1; transform: none; }
+  0%, 55% { opacity: 0; }
+  100% { opacity: 1; }
 }
-.leg-left { animation: leg-in-left 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
-.leg-right { animation: leg-in-right 700ms 120ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
-.leg-seal { animation: seal 1200ms 200ms cubic-bezier(0.2, 0.7, 0.2, 1) both; transform-origin: center; }
+.leg-left { animation: leg-in-left 500ms steps(5, end) both; }
+.leg-right { animation: leg-in-right 500ms 120ms steps(5, end) both; }
+.leg-seal { animation: seal 900ms 200ms steps(4, end) both; }
+@keyframes blink {
+  50% { opacity: 0; }
+}
+.caret { animation: blink 1s steps(1, end) infinite; }

@@ -36,7 +36,7 @@ interface MarketTrade {
 function Stat({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="min-w-0">
-      <dt className="text-[12px] text-muted">{label}</dt>
+      <dt className="text-[13px] text-muted">{label}</dt>
       <dd className="num mt-0.5 truncate text-[15px] font-medium">{children}</dd>
     </div>
   );
@@ -70,7 +70,7 @@ export function TokenView({ mint }: { mint: string }) {
             <TokenAvatar src={token.imageUrl} symbol={token.symbol} size={56} />
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="title-display text-[28px] sm:text-[34px]">{token.name}</h1>
+                <h1 className="title-display text-[24px] sm:text-[30px]">{token.name}</h1>
                 <span className="text-lg text-muted">{token.symbol}</span>
                 <VenueBadge venue={market.venue} />
                 <DemoBadge show={token.isDemo} />
@@ -93,7 +93,7 @@ export function TokenView({ mint }: { mint: string }) {
               <Share2 className="size-4" /> Share
             </Button>
           </div>
-          {metadata?.uri && !metadata.verifiedOnChain && <p className="mt-3 text-[12px] text-warn">Off-chain metadata does not match the on-chain metadata URI. Names and images are set by the creator and can impersonate other tokens; always check the mint address.</p>}
+          {metadata?.uri && !metadata.verifiedOnChain && <p className="mt-3 text-[13px] text-warn">Off-chain metadata does not match the on-chain metadata URI. Names and images are set by the creator and can impersonate other tokens; always check the mint address.</p>}
           <dl className="mt-4 grid grid-cols-2 gap-4 border-t border-line pt-4 sm:grid-cols-3 xl:grid-cols-6">
             <Stat label="Price">{price(market.priceSolPerToken)} SOL</Stat>
             <Stat label="Market cap"><Sol lamports={market.marketCapLamports} digits={1} /></Stat>
@@ -104,14 +104,14 @@ export function TokenView({ mint }: { mint: string }) {
           </dl>
           {market.venue === "PUMP_BONDING_CURVE" && market.progressBps !== null && (
             <div className="mt-4">
-              <div className="mb-1.5 flex justify-between text-[12px] text-muted">
+              <div className="mb-1.5 flex justify-between text-[13px] text-muted">
                 <span>Bonding curve progress</span>
                 <span className="num">{bps(market.progressBps)}</span>
               </div>
-              <div className="h-1.5 overflow-hidden rounded-full bg-raised" role="progressbar" aria-valuenow={market.progressBps / 100} aria-valuemin={0} aria-valuemax={100}>
-                <div className="h-full rounded-full bg-brass" style={{ width: `${market.progressBps / 100}%` }} />
+              <div className="h-5 bg-ink p-[3px] bevel-in" role="progressbar" aria-valuenow={market.progressBps / 100} aria-valuemin={0} aria-valuemax={100}>
+                <div className="chunks h-full" style={{ width: `${market.progressBps / 100}%` }} />
               </div>
-              <p className="mt-1.5 text-[12px] text-faint">When every curve token is sold the coin graduates and liquidity migrates to PumpSwap.</p>
+              <p className="mt-1.5 text-[13px] text-faint">When every curve token is sold the coin graduates and liquidity migrates to PumpSwap.</p>
             </div>
           )}
           {market.note && <p className="mt-3 text-[13px] text-warn">{market.note}</p>}
@@ -163,16 +163,16 @@ export function TokenView({ mint }: { mint: string }) {
               {!trades.data?.market.length ? (
                 <Empty title="No indexed trades yet">Pump and PumpSwap trades appear here as the indexer sees them.</Empty>
               ) : (
-                <div className="overflow-x-auto">
+                <div className="m-2 overflow-x-auto bg-ink bevel-in">
                   <table className="w-full min-w-[640px] text-[13px]">
-                    <thead className="text-left text-[12px] text-faint">
-                      <tr className="border-b border-line">
-                        <th className="px-4 py-2 font-medium">Side</th>
-                        <th className="px-2 py-2 font-medium">SOL</th>
-                        <th className="px-2 py-2 font-medium">Tokens</th>
-                        <th className="px-2 py-2 font-medium">Price</th>
-                        <th className="px-2 py-2 font-medium">Trader</th>
-                        <th className="px-4 py-2 text-right font-medium">Time</th>
+                    <thead className="text-left text-[13px] text-text">
+                      <tr>
+                        <th className="px-4 py-2 bg-panel font-normal bevel-out">Side</th>
+                        <th className="px-2 py-2 bg-panel font-normal bevel-out">SOL</th>
+                        <th className="px-2 py-2 bg-panel font-normal bevel-out">Tokens</th>
+                        <th className="px-2 py-2 bg-panel font-normal bevel-out">Price</th>
+                        <th className="px-2 py-2 bg-panel font-normal bevel-out">Trader</th>
+                        <th className="px-4 py-2 text-right bg-panel font-normal bevel-out">Time</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -194,7 +194,7 @@ export function TokenView({ mint }: { mint: string }) {
               )}
             </TabsContent>
             <TabsContent value="holders" className="p-4">
-              <p className="mb-3 text-[12px] text-faint">Largest token accounts on chain. Accounts can belong to the bonding curve, a pool, or an exchange.</p>
+              <p className="mb-3 text-[13px] text-faint">Largest token accounts on chain. Accounts can belong to the bonding curve, a pool, or an exchange.</p>
               <dl className="text-[13px]">
                 {holders.data?.holders.map((h, i) => (
                   <Row key={h.address} label={<span className="flex items-center gap-2"><span className="num w-5 text-faint">{i + 1}</span><Address value={h.address} /></span>}>
@@ -223,10 +223,10 @@ export function TokenView({ mint }: { mint: string }) {
                   <Row label="Token-2022 extensions">{safety.extensions.length ? safety.extensions.join(", ") : "None"}</Row>
                   <Row label="Mint authority">{safety.mintAuthority ? <Address value={safety.mintAuthority} /> : "Revoked"}</Row>
                   <Row label="Freeze authority">{safety.freezeAuthority ? <Address value={safety.freezeAuthority} /> : "Revoked"}</Row>
-                  {metadata?.uri && <Row label="Metadata URI"><span className="break-all text-[12px] text-muted">{metadata.uri}</span></Row>}
+                  {metadata?.uri && <Row label="Metadata URI"><span className="break-all text-[13px] text-muted">{metadata.uri}</span></Row>}
                 </dl>
               </div>
-              <p className="text-[12px] text-faint">Listing a token here is automatic and is not an endorsement. See the token listing disclaimer.</p>
+              <p className="text-[13px] text-faint">Listing a token here is automatic and is not an endorsement. See the token listing disclaimer.</p>
             </TabsContent>
           </Tabs>
         </Panel>
@@ -241,7 +241,7 @@ export function TokenView({ mint }: { mint: string }) {
             <Link href={`/otc/create?mint=${mint}&side=SELL`} className={buttonClass({ variant: "outline", size: "sm" })}>Make OTC offer</Link>
             <Link href={`/otc/create?mint=${mint}&side=BUY`} className={buttonClass({ variant: "outline", size: "sm" })}>Place OTC bid</Link>
           </div>
-          {!safety.ok && <p className="text-[12px] text-sell">This token can't be settled OTC: {safety.blockers[0]}</p>}
+          {!safety.ok && <p className="text-[13px] text-sell">This token can't be settled OTC: {safety.blockers[0]}</p>}
         </Panel>
       </aside>
     </div>

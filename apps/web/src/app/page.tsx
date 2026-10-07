@@ -1,31 +1,54 @@
 import Link from "next/link";
 import { buttonClass } from "@/components/ui/button";
+import { Panel, TitleBar } from "@/components/ui/panel";
+import { PixelIcon, type PixelIconName } from "@/components/ui/pixel-icon";
 import { LiveMarkets, RecentTrades } from "@/components/home/live-sections";
 import { publicConfig } from "@/server/context";
 
-function LegsHero() {
+const DESKTOP_ICONS: Array<{ href: string; label: string; icon: PixelIconName }> = [
+  { href: "/explore", label: "Explore", icon: "explore" },
+  { href: "/otc", label: "OTC Desk", icon: "ticket" },
+  { href: "/launch", label: "Launch", icon: "rocket" },
+  { href: "/portfolio", label: "Portfolio", icon: "briefcase" },
+  { href: "/docs", label: "Help", icon: "help" },
+];
+
+function DesktopIcons() {
   return (
-    <figure aria-label="Example: one transaction carries both legs of an OTC trade" className="panel relative overflow-hidden p-6">
-      <figcaption className="mb-5 text-[12px] text-faint">Example settlement</figcaption>
-      <div className="space-y-3">
-        <div className="leg-left flex items-center justify-between rounded-[var(--radius-control)] border border-brass/30 bg-brass-dim/40 px-4 py-3">
-          <span className="text-[13px] text-muted">Seller sends</span>
+    <nav aria-label="Desktop" className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:gap-4 lg:overflow-visible">
+      {DESKTOP_ICONS.map((i) => (
+        <Link key={i.href} href={i.href} className="group flex w-20 shrink-0 flex-col items-center gap-1 p-1 text-center focus-visible:outline-white">
+          <PixelIcon name={i.icon} size={40} />
+          <span className="px-1 text-[13px] text-white [text-shadow:1px_1px_0_#1a1915] group-hover:bg-select group-focus-visible:bg-select">{i.label}</span>
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
+function SettlementDialog() {
+  return (
+    <Panel className="shadow-[4px_4px_0_rgba(0,0,0,0.3)]" aria-label="Example: one transaction carries both legs of an OTC trade">
+      <TitleBar title="Settlement.dlg (example)" icon={<PixelIcon name="ticket" size={16} />} />
+      <div className="space-y-2 p-4">
+        <div className="leg-left flex items-center justify-between bg-ink px-3 py-2 bevel-in">
+          <span className="text-muted">Seller sends</span>
           <span className="num text-[20px] text-brass">20,000,000 TOKEN</span>
         </div>
-        <div className="leg-right flex items-center justify-between rounded-[var(--radius-control)] border border-glacier/30 bg-glacier-dim/40 px-4 py-3">
-          <span className="text-[13px] text-muted">Buyer sends</span>
+        <div className="leg-right flex items-center justify-between bg-ink px-3 py-2 bevel-in">
+          <span className="text-muted">Buyer sends</span>
           <span className="num text-[20px] text-glacier">37 SOL</span>
         </div>
+        <div className="leg-seal flex items-start gap-3 pt-2">
+          <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center border border-text bg-buy text-[14px] font-bold text-white" aria-hidden>
+            ✓
+          </span>
+          <p className="text-[14px]">
+            <span className="font-semibold">One Solana transaction, signed by both wallets.</span> Both legs settle together, or neither does. No escrow, no custody, no price impact on the curve.
+          </p>
+        </div>
       </div>
-      <svg viewBox="0 0 400 60" className="my-1 h-14 w-full" aria-hidden preserveAspectRatio="none">
-        <path d="M60 0 C60 34, 200 26, 200 60" fill="none" stroke="var(--color-brass)" strokeWidth="2" className="leg-left" />
-        <path d="M340 0 C340 34, 200 26, 200 60" fill="none" stroke="var(--color-glacier)" strokeWidth="2" className="leg-right" />
-      </svg>
-      <div className="leg-seal rounded-[var(--radius-control)] border border-line-strong bg-raised px-4 py-3">
-        <p className="font-medium">One Solana transaction, signed by both wallets</p>
-        <p className="mt-0.5 text-[13px] text-muted">Both legs settle together, or neither does. No escrow, no custody, no price impact on the curve.</p>
-      </div>
-    </figure>
+    </Panel>
   );
 }
 
@@ -39,7 +62,7 @@ const STEPS = [
 const FAQ = [
   { q: "Do you ever hold my tokens or SOL?", a: "No. Orders are signed messages. Assets move only inside the settlement transaction that both wallets sign, directly from one wallet to the other." },
   { q: "What stops someone changing the deal after I sign?", a: "Your signature covers the exact transaction bytes: amounts, recipients, token mint and fee. Any change invalidates it, and your browser re-verifies the transaction against the signed order before asking your wallet." },
-  { q: "What if I cancel after the other side signed?", a: "Cancelling stops our app from collecting signatures or submitting. A transaction you already signed stays valid only until its blockhash expires, about 60 to 90 seconds." },
+  { q: "What if I cancel after the other side signed?", a: "Cancelling stops this app from collecting signatures or submitting. A transaction you already signed stays valid only until its blockhash expires, about 60 to 90 seconds." },
   { q: "Why use OTC instead of selling on Pump?", a: "Selling a large position into a bonding curve moves the price against you. A negotiated block trade settles at one agreed price. The comparison we show is an estimate, not a guarantee of either outcome." },
   { q: "Which tokens are supported?", a: "SOL-quoted Pump.fun tokens on the bonding curve or PumpSwap. Tokens with transfer hooks, permanent delegates, freeze authority or other risky Token-2022 extensions are refused." },
 ];
@@ -47,68 +70,93 @@ const FAQ = [
 export default function Home() {
   const c = publicConfig();
   return (
-    <div className="space-y-16">
-      <section className="grid items-center gap-10 pt-6 lg:grid-cols-[1.1fr_1fr]">
-        <div>
-          <h1 className="title-display text-[clamp(44px,7vw,84px)]">Launch on Pump. Trade size off-market.</h1>
-          <p className="mt-5 max-w-[52ch] text-[17px] text-muted">Launch Pump.fun tokens and negotiate wallet-to-wallet block trades with atomic Solana settlement.</p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/otc" className={buttonClass({ size: "lg" })}>Open the OTC desk</Link>
-            <Link href="/launch" className={buttonClass({ size: "lg", variant: "outline" })}>Launch a token</Link>
+    <div className="mx-auto grid max-w-[1400px] gap-4 lg:grid-cols-[96px_minmax(0,1fr)]">
+      <DesktopIcons />
+      <div className="min-w-0 space-y-4">
+        <div className="grid items-start gap-4 xl:grid-cols-[1.15fr_1fr]">
+          <Panel className="shadow-[4px_4px_0_rgba(0,0,0,0.3)]">
+            <TitleBar title={`Welcome to ${c.appName}`} icon={<PixelIcon name="legs" size={16} />} />
+            <div className="p-5 sm:p-7">
+              <h1 className="title-display text-[clamp(36px,6vw,64px)]">Launch on Pump. Trade size off-market.</h1>
+              <p className="mt-4 max-w-[52ch] text-[17px] text-muted">Launch Pump.fun tokens and negotiate wallet-to-wallet block trades with atomic Solana settlement.</p>
+              <div className="mt-6 flex flex-wrap gap-2">
+                <Link href="/otc" className={buttonClass({ size: "lg", variant: "primary" })}>Open the OTC desk</Link>
+                <Link href="/launch" className={buttonClass({ size: "lg" })}>Launch a token</Link>
+              </div>
+              {!c.isMainnet && <p className="mt-5 text-[14px] text-warn">Running on Solana {c.cluster}. Tokens and SOL here have no real-world value.</p>}
+              {c.isMainnet && !c.transactionsEnabled && <p className="mt-5 text-[14px] text-sell">Mainnet, read-only: browsing and quotes work; trading is switched off on this deployment.</p>}
+            </div>
+          </Panel>
+          <SettlementDialog />
+        </div>
+
+        <LiveMarkets />
+
+        <Panel>
+          <TitleBar title="How an OTC trade works" icon={<PixelIcon name="help" size={16} />} />
+          <ol className="grid gap-3 p-4 md:grid-cols-4">
+            {STEPS.map((s, i) => (
+              <li key={s.title} className="bg-ink p-3 bevel-in">
+                <span className="num text-[13px] text-faint">Step {i + 1} of 4</span>
+                <p className="mt-1 font-semibold">{s.title}</p>
+                <p className="mt-1 text-[14px] text-muted">{s.body}</p>
+              </li>
+            ))}
+          </ol>
+        </Panel>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <Panel>
+            <TitleBar title="Launch through Pump" icon={<PixelIcon name="rocket" size={16} />} />
+            <div className="p-4">
+              <p className="text-muted">Create a Token-2022 coin with Pump&apos;s current create_v2 instruction, optionally with an atomic first buy. The mint key is generated in your browser and never sent to us.</p>
+              <Link href="/launch" className={buttonClass({ className: "mt-4" })}>Start a launch</Link>
+            </div>
+          </Panel>
+          <Panel>
+            <TitleBar title="Atomic settlement" icon={<PixelIcon name="ticket" size={16} />} />
+            <div className="p-4">
+              <p className="text-muted">The token transfer, the SOL payment and the disclosed platform fee travel in a single transaction. Solana executes all of it or none of it.</p>
+              <Link href="/docs#settlement" className={buttonClass({ className: "mt-4" })}>Read the protocol</Link>
+            </div>
+          </Panel>
+        </div>
+
+        <RecentTrades />
+
+        <Panel>
+          <TitleBar title="Help - Questions" icon={<PixelIcon name="help" size={16} />} />
+          <div className="m-3 divide-y divide-line bg-ink bevel-in">
+            {FAQ.map((f) => (
+              <details key={f.q} className="group px-4 py-3">
+                <summary className="flex cursor-pointer list-none items-center gap-2 font-semibold marker:hidden">
+                  <span className="flex size-4 items-center justify-center bg-panel text-[13px] leading-none bevel-out group-open:bevel-in" aria-hidden>
+                    <span className="group-open:hidden">+</span>
+                    <span className="hidden group-open:inline">−</span>
+                  </span>
+                  {f.q}
+                </summary>
+                <p className="mt-2 max-w-prose pl-6 text-muted">{f.a}</p>
+              </details>
+            ))}
           </div>
-          {!c.isMainnet && <p className="mt-6 text-[13px] text-warn">Running on Solana {c.cluster}. Tokens and SOL here have no real-world value.</p>}
-        </div>
-        <LegsHero />
-      </section>
+        </Panel>
 
-      <LiveMarkets />
-
-      <section>
-        <h2 className="title-display mb-6 text-[36px]">How an OTC trade works</h2>
-        <ol className="grid gap-px overflow-hidden rounded-[var(--radius-panel)] border border-line bg-line md:grid-cols-4">
-          {STEPS.map((s, i) => (
-            <li key={s.title} className="bg-panel p-5">
-              <span className="num text-[13px] text-faint">Step {i + 1}</span>
-              <p className="mt-2 font-medium">{s.title}</p>
-              <p className="mt-1 text-[13px] text-muted">{s.body}</p>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-2">
-        <div className="panel p-6">
-          <h2 className="title-display text-[30px]">Launch through Pump</h2>
-          <p className="mt-2 text-muted">Create a Token-2022 coin with Pump's current create_v2 instruction, optionally with an atomic first buy. The mint key is generated in your browser and never sent to us.</p>
-          <Link href="/launch" className={buttonClass({ variant: "outline", className: "mt-5" })}>Start a launch</Link>
-        </div>
-        <div className="panel p-6">
-          <h2 className="title-display text-[30px]">Atomic settlement</h2>
-          <p className="mt-2 text-muted">The token transfer, the SOL payment and the disclosed platform fee travel in a single transaction. Solana executes all of it or none of it.</p>
-          <Link href="/docs#settlement" className={buttonClass({ variant: "outline", className: "mt-5" })}>Read the protocol</Link>
-        </div>
-      </section>
-
-      <RecentTrades />
-
-      <section className="grid gap-8 md:grid-cols-[1fr_1.4fr]">
-        <h2 className="title-display text-[36px]">Questions</h2>
-        <div className="divide-y divide-line border-y border-line">
-          {FAQ.map((f) => (
-            <details key={f.q} className="group py-4">
-              <summary className="cursor-pointer list-none font-medium marker:hidden">{f.q}</summary>
-              <p className="mt-2 max-w-prose text-muted">{f.a}</p>
-            </details>
-          ))}
-        </div>
-      </section>
-
-      <section className="rounded-[var(--radius-panel)] border border-warn/30 bg-warn-dim/30 p-6">
-        <h2 className="font-semibold text-warn">Risk disclosure</h2>
-        <p className="mt-2 max-w-prose text-[13px] text-muted">
-          Crypto assets can be extremely volatile and can go to zero. You control your own wallet and are responsible for every transaction you sign. Market prices change constantly and displayed quotes can be stale. Reference prices are estimates, not executable values. OTC counterparties should verify all terms before signing. {c.appName} does not guarantee the value of any asset and does not provide investment advice. <Link href="/risk" className="text-text underline">Full risk disclosure</Link>
-        </p>
-      </section>
+        <Panel>
+          <TitleBar title="Risk disclosure" />
+          <div className="flex items-start gap-4 p-4">
+            <svg width="36" height="32" viewBox="0 0 12 11" shapeRendering="crispEdges" aria-hidden className="shrink-0">
+              <path fill="#1a1915" d="M5 0h2v1H5zM4 1h1v2H4zM7 1h1v2H7zM3 3h1v2H3zM8 3h1v2H8zM2 5h1v2H2zM9 5h1v2H9zM1 7h1v2H1zM10 7h1v2h-1zM0 9h1v2H0zM11 9h1v2h-1zM1 10h10v1H1z" />
+              <path fill="#e8c25a" d="M5 1h2v2H5zM4 3h4v2H4zM3 5h6v2H3zM2 7h8v2H2zM1 9h10v1H1z" />
+              <path fill="#1a1915" d="M5.5 3.5h1v3h-1zM5.5 7.5h1v1h-1z" />
+            </svg>
+            <p className="max-w-prose text-[14px] text-muted">
+              Crypto assets can be extremely volatile and can go to zero. You control your own wallet and are responsible for every transaction you sign. Market prices change constantly and displayed quotes can be stale. Reference prices are estimates, not executable values. OTC counterparties should verify all terms before signing. {c.appName} does not guarantee the value of any asset and does not provide investment advice.{" "}
+              <Link href="/risk" className="text-glacier underline">Full risk disclosure</Link>
+            </p>
+          </div>
+        </Panel>
+      </div>
     </div>
   );
 }

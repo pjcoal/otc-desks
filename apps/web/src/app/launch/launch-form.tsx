@@ -159,7 +159,7 @@ export function LaunchForm() {
           <Row label="Creator wallet"><Address value={prepared.summary.creator} /></Row>
           <Row label="Instruction">{prepared.summary.instruction}</Row>
           <Row label="Token program">{prepared.summary.tokenProgram}</Row>
-          <Row label="Metadata">{metadataUri && <a href={metadataUri} target="_blank" rel="noreferrer noopener" className="break-all text-[12px] text-glacier hover:underline">{metadataUri}</a>}</Row>
+          <Row label="Metadata">{metadataUri && <a href={metadataUri} target="_blank" rel="noreferrer noopener" className="break-all text-[13px] text-glacier hover:underline">{metadataUri}</a>}</Row>
           {holderReward && <Row label="Creator fees">Paid to holders (holder-reward coin, permanent)</Row>}
           {q ? (
             <>
@@ -196,12 +196,12 @@ export function LaunchForm() {
   return (
     <div className="mx-auto max-w-2xl space-y-5">
       <div>
-        <h1 className="title-display text-[44px] leading-none">Launch on Pump</h1>
+        <h1 className="title-display text-[30px] leading-none">Launch on Pump</h1>
         <p className="mt-2 text-muted">Creates a Token-2022 coin through Pump's create_v2 instruction. You sign with your own wallet; the mint key is generated in your browser.</p>
       </div>
       <Panel className="space-y-5 p-5">
         <div className="grid gap-4 sm:grid-cols-[120px_1fr]">
-          <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 overflow-hidden rounded-[var(--radius-panel)] border border-dashed border-line-strong text-[12px] text-muted hover:bg-hover">
+          <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 overflow-hidden rounded-[var(--radius-panel)] border border-dashed border-line-strong text-[13px] text-muted hover:bg-hover">
             {preview ? (
               <img src={preview} alt="Token image preview" className="size-full object-cover" />
             ) : (
@@ -251,7 +251,7 @@ export function LaunchForm() {
         <Button size="lg" disabled={!formValid || !wallet.connected || !cfg.transactionsEnabled} loading={busy === "prepare"} onClick={() => void prepare()}>
           {wallet.connected ? "Review launch" : "Connect a wallet to launch"}
         </Button>
-        <p className="text-[12px] text-faint">Images are re-encoded to WebP and stored with the metadata before the token is created.</p>
+        <p className="text-[13px] text-faint">Images are re-encoded to WebP and stored with the metadata before the token is created.</p>
       </Panel>
     </div>
   );

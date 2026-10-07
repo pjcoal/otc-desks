@@ -134,7 +134,7 @@ export function CreateWizard() {
         <h1 className="title-display text-[34px]">{published.isPrivate ? "Private offer sent" : "Your offer is live"}</h1>
         <p className="text-muted">{published.isPrivate ? "Share this link with the recipient. Only their wallet can open the terms or accept. The link alone grants nothing." : "It appears in the token's OTC book. You'll be notified when someone accepts or counters."}</p>
         <div className="flex items-center gap-2 rounded-[var(--radius-control)] border border-line bg-ink px-3 py-2">
-          <span className="truncate font-mono text-[12px]">{link}</span>
+          <span className="truncate font-mono text-[13px]">{link}</span>
           <button className="ml-auto text-muted hover:text-text" aria-label="Copy link" onClick={() => { void navigator.clipboard?.writeText(link); setCopied(true); }}>
             {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
           </button>
@@ -156,7 +156,7 @@ export function CreateWizard() {
           {STEPS.map((s, i) => (
             <li key={s}>
               <button type="button" disabled={i > step} onClick={() => setStep(i)} className={cn("flex w-full items-center gap-2.5 rounded px-2 py-1.5 text-left text-[13px]", i === step ? "bg-raised text-text" : i < step ? "text-muted hover:text-text" : "text-faint")}>
-                <span className={cn("num flex size-5 items-center justify-center rounded-full border text-[11px]", i < step ? "border-buy text-buy" : i === step ? "border-text" : "border-line")}>{i < step ? <Check className="size-3" /> : i + 1}</span>
+                <span className={cn("num flex size-5 items-center justify-center rounded-full border text-[12px]", i < step ? "border-buy text-buy" : i === step ? "border-text" : "border-line")}>{i < step ? <Check className="size-3" /> : i + 1}</span>
                 {s}
               </button>
             </li>
@@ -175,9 +175,9 @@ export function CreateWizard() {
             <TokenAvatar src={t.token.imageUrl} symbol={t.token.symbol} size={36} />
             <div className="min-w-0 flex-1">
               <p className="font-medium">{t.token.name} <span className="text-muted">{t.token.symbol}</span></p>
-              <p className="text-[12px] text-muted">Pump price {price(t.market.priceSolPerToken)} SOL</p>
+              <p className="text-[13px] text-muted">Pump price {price(t.market.priceSolPerToken)} SOL</p>
             </div>
-            {!t.safety.ok && <span className="text-[12px] text-sell">Not eligible: {t.safety.blockers[0]}</span>}
+            {!t.safety.ok && <span className="text-[13px] text-sell">Not eligible: {t.safety.blockers[0]}</span>}
           </div>
         )}
         {step === 1 && (
@@ -193,7 +193,7 @@ export function CreateWizard() {
           >
             <Input id="w-qty" value={qty} onChange={(e) => setQty(e.target.value)} inputMode="decimal" suffix={sym} autoFocus />
             {side === "SELL" && balance.data !== undefined && (
-              <p className="text-[12px] text-muted">
+              <p className="text-[13px] text-muted">
                 You hold <Tokens raw={balance.data} decimals={decimals} symbol={sym} />.{" "}
                 <button className="text-glacier hover:underline" onClick={() => setQty((balance.data! / 10n ** BigInt(decimals)).toString())}>Use all</button>
               </p>

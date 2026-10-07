@@ -17,7 +17,7 @@ export default function SettingsPage() {
   const refLink = session?.referralCode && typeof window !== "undefined" ? `${window.location.origin}/?ref=${session.referralCode}` : null;
   return (
     <div className="mx-auto max-w-2xl space-y-5">
-      <h1 className="title-display text-[44px] leading-none">Settings</h1>
+      <h1 className="title-display text-[30px] leading-none">Settings</h1>
       <Panel>
         <PanelHeader title="Trading" />
         <dl className="p-4">
@@ -47,7 +47,7 @@ export default function SettingsPage() {
           )}
           {refLink ? (
             <div className="flex items-center gap-2">
-              <code className="flex-1 truncate rounded bg-ink px-3 py-2 font-mono text-[12px]">{refLink}</code>
+              <code className="flex-1 truncate rounded bg-ink px-3 py-2 font-mono text-[13px]">{refLink}</code>
               <Button size="sm" variant="outline" onClick={() => { void navigator.clipboard?.writeText(refLink); setCopied(true); }}>{copied ? "Copied" : "Copy"}</Button>
             </div>
           ) : (

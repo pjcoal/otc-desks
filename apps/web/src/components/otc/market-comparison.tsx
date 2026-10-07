@@ -54,7 +54,7 @@ export function MarketComparison({ mint, side, tokenAmountRaw, quoteLamports }: 
               <Row label="Price impact"><span className={m.priceImpactBps > 500 ? "text-warn" : undefined}>{bps(m.priceImpactBps)}</span></Row>
               <Row label="Protocol + creator fees"><Sol lamports={fees} digits={5} /></Row>
               <Row label="Avg. price / token">{price(m.executionPriceSolPerToken)}</Row>
-              <Row label="Route"><span className="text-[12px] text-muted">{m.route}</span></Row>
+              <Row label="Route"><span className="text-[13px] text-muted">{m.route}</span></Row>
             </dl>
           ) : (
             <p className="text-[13px] text-muted">{data.note ?? "No market quote available."}</p>
@@ -84,7 +84,7 @@ export function MarketComparison({ mint, side, tokenAmountRaw, quoteLamports }: 
           {diff >= 0n ? "more than selling into the market now" : "less than selling into the market now"}.
         </p>
       )}
-      <p className="text-[12px] text-faint">
+      <p className="text-[13px] text-faint">
         Estimates from slot {data.slot} at {new Date(data.quotedAt).toLocaleTimeString()}. Market prices move constantly; the OTC side settles only if a counterparty accepts and both wallets sign. This is not a recommendation.
       </p>
     </div>

@@ -32,10 +32,10 @@ export function PriceChart({ mint }: { mint: string }) {
     if (!el.current) return;
     const c = createChart(el.current, {
       autoSize: true,
-      layout: { background: { color: "transparent" }, textColor: "#8a94ab", fontFamily: "inherit", attributionLogo: false },
-      grid: { vertLines: { color: "#1c2336" }, horzLines: { color: "#1c2336" } },
-      rightPriceScale: { borderColor: "#2a3349" },
-      timeScale: { borderColor: "#2a3349", timeVisible: true },
+      layout: { background: { color: "#fbfaf5" }, textColor: "#55514a", fontFamily: "inherit", attributionLogo: false },
+      grid: { vertLines: { color: "#ebe7dd" }, horzLines: { color: "#ebe7dd" } },
+      rightPriceScale: { borderColor: "#8e897d" },
+      timeScale: { borderColor: "#8e897d", timeVisible: true },
       localization: { priceFormatter: (p: number) => formatPrice(new D(p.toPrecision(8)), 4) },
     });
     chart.current = c;
@@ -48,11 +48,11 @@ export function PriceChart({ mint }: { mint: string }) {
   useEffect(() => {
     const c = chart.current;
     if (!c || !data) return;
-    const candles = c.addSeries(CandlestickSeries, { upColor: "#4fc9a8", downColor: "#ee7189", borderVisible: false, wickUpColor: "#4fc9a8", wickDownColor: "#ee7189", priceFormat: { type: "price", precision: 12, minMove: 1e-12 } });
-    const volume = c.addSeries(HistogramSeries, { priceScaleId: "", priceFormat: { type: "volume" }, color: "#2a3349" });
+    const candles = c.addSeries(CandlestickSeries, { upColor: "#1d6b37", downColor: "#a3261b", borderVisible: false, wickUpColor: "#1d6b37", wickDownColor: "#a3261b", priceFormat: { type: "price", precision: 12, minMove: 1e-12 } });
+    const volume = c.addSeries(HistogramSeries, { priceScaleId: "", priceFormat: { type: "volume" }, color: "#b9b3a6" });
     volume.priceScale().applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
     candles.setData(data.candles.map((k) => ({ time: k.time as UTCTimestamp, open: Number(k.open), high: Number(k.high), low: Number(k.low), close: Number(k.close) })));
-    volume.setData(data.candles.map((k) => ({ time: k.time as UTCTimestamp, value: Number(k.volumeLamports) / 1e9, color: Number(k.close) >= Number(k.open) ? "#4fc9a855" : "#ee718955" })));
+    volume.setData(data.candles.map((k) => ({ time: k.time as UTCTimestamp, value: Number(k.volumeLamports) / 1e9, color: Number(k.close) >= Number(k.open) ? "#1d6b3755" : "#a3261b55" })));
     c.timeScale().fitContent();
     return () => {
       c.removeSeries(candles);
@@ -65,9 +65,9 @@ export function PriceChart({ mint }: { mint: string }) {
     <div>
       <div className="flex items-center justify-between gap-3 px-4 pt-3">
         <Segmented value={tf} onChange={setTf} options={TF.map((t) => ({ value: t, label: t }))} size="sm" />
-        <span className="text-[12px] text-faint">{data?.coverageFrom ? `Indexed since ${new Date(data.coverageFrom).toLocaleDateString()}` : ""}</span>
+        <span className="text-[13px] text-faint">{data?.coverageFrom ? `Indexed since ${new Date(data.coverageFrom).toLocaleDateString()}` : ""}</span>
       </div>
-      <div className="relative h-[320px] w-full">
+      <div className="relative m-2 h-[320px] bevel-in bg-ink p-[3px]">
         <div ref={el} className="absolute inset-0" />
         {(isLoading || few) && (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center">

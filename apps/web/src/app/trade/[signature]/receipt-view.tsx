@@ -52,7 +52,7 @@ export function ReceiptView({ signature }: { signature: string }) {
         <Row label="Time">{data.blockTime ? new Date(data.blockTime).toLocaleString() : "—"}</Row>
         <Row label="Slot">{data.slot ?? "—"}</Row>
         <Row label="Transaction"><Address value={signature} kind="tx" chars={8} /></Row>
-        {data.orderHash && <Row label="Order hash (in memo)"><span className="font-mono text-[11px] text-muted">{data.orderHash.slice(0, 24)}…</span></Row>}
+        {data.orderHash && <Row label="Order hash (in memo)"><span className="font-mono text-[12px] text-muted">{data.orderHash.slice(0, 24)}…</span></Row>}
       </dl>
       <div className="mt-5 rounded-[var(--radius-control)] bg-raised px-4 py-3 text-[13px] text-muted">
         <p className="font-medium text-text">Verify it yourself</p>

@@ -6,8 +6,8 @@ export const metadata = { title: "Docs" };
 export default function Docs() {
   const c = publicConfig();
   return (
-    <article className="mx-auto max-w-[70ch] space-y-4 pb-8 text-[15px] leading-relaxed [&_h2]:mt-10 [&_h2]:font-display [&_h2]:text-[28px] [&_h3]:mt-5 [&_h3]:font-semibold [&_li]:ml-5 [&_li]:list-disc [&_li]:text-muted [&_p]:text-muted [&_code]:rounded [&_code]:bg-raised [&_code]:px-1 [&_code]:font-mono [&_code]:text-[13px] [&_code]:text-text">
-      <h1 className="title-display text-[48px] leading-none">How {c.appName} works</h1>
+    <article className="memo mx-auto max-w-[80ch] space-y-4 bg-ink px-6 py-6 bevel-in sm:px-10 [&_h2]:mt-10 [&_h2]:text-[17px] [&_h2]:font-medium [&_h2]:uppercase [&_h3]:mt-5 [&_h3]:font-medium [&_li]:ml-5 [&_li]:list-disc [&_li]:text-muted [&_p]:text-muted [&_code]:bg-hover [&_code]:px-1 [&_code]:font-mono [&_code]:text-[13px] [&_code]:text-text">
+      <h1 className="text-[22px] font-medium">How {c.appName} works</h1>
       <p>A guide for traders, plus enough protocol detail to verify everything yourself. Engineers implementing a compatible client should read <code>docs/otc-protocol.md</code> in the repository.</p>
 
       <h2 id="otc">OTC orders are signed messages</h2>

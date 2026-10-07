@@ -171,7 +171,7 @@ export function TradePanel({ market, symbol }: { market: Snapshot; symbol: strin
               </Button>
             ))}
       </div>
-      {parseError && <p className="mt-2 text-[12px] text-sell">{parseError}</p>}
+      {parseError && <p className="mt-2 text-[13px] text-sell">{parseError}</p>}
 
       <dl className="mt-4 border-t border-line pt-3 text-[13px]">
         <Row label={side === "BUY" ? "Expected tokens" : "Expected SOL"}>{q ? side === "BUY" ? <Tokens raw={q.expectedOutput} decimals={decimals} symbol={symbol} /> : <Sol lamports={q.expectedOutput} /> : "—"}</Row>
@@ -187,11 +187,11 @@ export function TradePanel({ market, symbol }: { market: Snapshot; symbol: strin
         ))}
         <Row label="Slippage tolerance">{bps(slippageBps)}</Row>
         <Row label="Route">
-          <span className="text-[12px] text-muted">{q?.route ?? <VenueBadge venue={market.venue} />}</span>
+          <span className="text-[13px] text-muted">{q?.route ?? <VenueBadge venue={market.venue} />}</span>
         </Row>
       </dl>
       {quote.error && <ErrorNote className="mt-2" error={quote.error} />}
-      {q && <p className="mt-2 text-[12px] text-faint">Estimate from slot {q.slot} at {new Date(q.quotedAt).toLocaleTimeString()}. Prices move; the minimum above is enforced on chain.</p>}
+      {q && <p className="mt-2 text-[13px] text-faint">Estimate from slot {q.slot} at {new Date(q.quotedAt).toLocaleTimeString()}. Prices move; the minimum above is enforced on chain.</p>}
       {error && <ErrorNote className="mt-3" error={error} />}
 
       {!wallet.connected ? (
@@ -216,10 +216,10 @@ export function TradePanel({ market, symbol }: { market: Snapshot; symbol: strin
                 </Row>
               ))}
               <Row label="Network fee (estimate)"><Sol lamports={prepared.networkFeeLamports} digits={6} /></Row>
-              <Row label="Token mint"><span className="font-mono text-[12px]">{market.mint.slice(0, 6)}…{market.mint.slice(-6)}</span></Row>
-              <Row label="Route"><span className="text-[12px]">{prepared.quote.route}</span></Row>
+              <Row label="Token mint"><span className="font-mono text-[13px]">{market.mint.slice(0, 6)}…{market.mint.slice(-6)}</span></Row>
+              <Row label="Route"><span className="text-[13px]">{prepared.quote.route}</span></Row>
             </dl>
-            <p className="text-[12px] text-muted">If the market moves past your {bps(prepared.quote.slippageBps)} slippage before confirmation, the transaction fails and nothing is traded (you only pay the network fee).</p>
+            <p className="text-[13px] text-muted">If the market moves past your {bps(prepared.quote.slippageBps)} slippage before confirmation, the transaction fails and nothing is traded (you only pay the network fee).</p>
             <Button block size="lg" variant={side === "BUY" ? "buy" : "sell"} loading={busy === "sign"} onClick={() => void sign()}>
               Sign and {side === "BUY" ? "buy" : "sell"} in wallet
             </Button>

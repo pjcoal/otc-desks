@@ -101,7 +101,7 @@ export function DealView({ publicId }: { publicId: string }) {
         <Panel className="p-5">
           <div className="mb-4 flex items-center justify-between gap-3">
             <Link href={`/token/${order.token.mint}`} className="text-[13px] text-muted hover:text-text">{order.token.name || "Token"} ({sym})</Link>
-            {order.isPrivate && <span className="inline-flex items-center gap-1 text-[12px] text-muted"><Lock className="size-3" />Private deal</span>}
+            {order.isPrivate && <span className="inline-flex items-center gap-1 text-[13px] text-muted"><Lock className="size-3" />Private deal</span>}
           </div>
           <OrderTerms order={order} />
         </Panel>
@@ -124,7 +124,7 @@ export function DealView({ publicId }: { publicId: string }) {
                 return (
                   <li key={r.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                     <Link href={`/deal/${r.publicId}`} className={`block max-w-[85%] rounded-[var(--radius-panel)] border px-4 py-3 ${r.id === order.id ? "border-glacier/60" : "border-line"} ${mine ? "bg-raised" : "bg-panel"}`}>
-                      <div className="flex items-center gap-2 text-[12px] text-muted">
+                      <div className="flex items-center gap-2 text-[13px] text-muted">
                         <span>{mine ? "You" : <Address value={r.makerWallet} />}</span>
                         <span>{r.revision === 0 ? "opened" : "countered"}</span>
                         <span className="text-faint">{relativeTime(r.createdAt)}</span>
@@ -158,7 +158,7 @@ export function DealView({ publicId }: { publicId: string }) {
                 Accepting reserves this order for you and opens settlement. You will review and sign the actual transaction next; nothing moves until both wallets sign.
               </p>
               <Button block size="lg" variant={order.side === "SELL" ? "buy" : "sell"} disabled={!!fillError} loading={busy === "accept"} onClick={() => void run("accept", async () => { await acceptOrder(wallet, cfg, order, fillRaw); }, "Accepted. Next: build and sign the settlement.")}>
-                Accept: {order.side === "SELL" ? "buy" : "sell"} <Tokens raw={fillRaw} decimals={order.token.decimals} className="text-ink" /> for <Sol lamports={fillQuote} className="text-ink" digits={4} unit />
+                Accept: {order.side === "SELL" ? "buy" : "sell"} <Tokens raw={fillRaw} decimals={order.token.decimals} /> for <Sol lamports={fillQuote} digits={4} unit />
               </Button>
               <Button block variant="outline" onClick={() => setMode(mode === "counter" ? "none" : "counter")}>Counteroffer</Button>
             </div>

@@ -97,8 +97,8 @@ export function SettlementPanel({ order, settlementId, onChange }: { order: Orde
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <StatusPill status={view.status} />
-        <span className="text-[12px] text-muted">Attempt {view.attempt}</span>
-        <span className="ml-auto flex gap-3 text-[12px] text-muted">
+        <span className="text-[13px] text-muted">Attempt {view.attempt}</span>
+        <span className="ml-auto flex gap-3 text-[13px] text-muted">
           <span className={view.buyerSigned ? "text-buy" : undefined}>Buyer {view.buyerSigned ? "signed" : "to sign"}</span>
           <span className={view.sellerSigned ? "text-buy" : undefined}>Seller {view.sellerSigned ? "signed" : "to sign"}</span>
         </span>
@@ -110,13 +110,13 @@ export function SettlementPanel({ order, settlementId, onChange }: { order: Orde
         <div className="rounded-[var(--radius-control)] border border-line-strong p-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <p className="text-[12px] text-muted">{check.role === "seller" ? "Selling" : "Paying"}</p>
+              <p className="text-[13px] text-muted">{check.role === "seller" ? "Selling" : "Paying"}</p>
               <p className="text-[22px] font-medium">
                 {check.role === "seller" ? <Tokens raw={d.tokenTransfer.amount} decimals={order.token.decimals} symbol={sym} /> : <Sol lamports={BigInt(view.buyerPaysLamports)} />}
               </p>
             </div>
             <div>
-              <p className="text-[12px] text-muted">Receiving</p>
+              <p className="text-[13px] text-muted">Receiving</p>
               <p className="text-[22px] font-medium">
                 {check.role === "seller" ? (
                   <>
@@ -136,7 +136,7 @@ export function SettlementPanel({ order, settlementId, onChange }: { order: Orde
             <Row label="Network fee estimate (paid by buyer)"><Sol lamports={view.networkFeeEstimateLamports} digits={6} /></Row>
             <Row label="Token mint"><Address value={d.tokenTransfer.mint} chars={6} /></Row>
             <Row label="Valid until block">{view.lastValidBlockHeight} (about 60–90 seconds after it was built)</Row>
-            <Row label="Transaction hash"><span className="font-mono text-[11px] text-muted">{view.messageHash.slice(0, 20)}…</span></Row>
+            <Row label="Transaction hash"><span className="font-mono text-[12px] text-muted">{view.messageHash.slice(0, 20)}…</span></Row>
           </dl>
           <p className="mt-3 text-[13px]">Both transfers execute atomically: if the transaction succeeds, both legs settle; if it fails, neither does.</p>
           {myTurn && (

@@ -29,18 +29,18 @@ export function WalletProfile({ address }: { address: string }) {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="title-display text-[40px] leading-none">Wallet</h1>
+        <h1 className="title-display text-[28px] leading-none">Wallet</h1>
         <p className="mt-2"><Address value={address} full /></p>
-        <p className="mt-1 text-[12px] text-faint">Public on-chain activity only. Private offers and negotiations are never shown here.</p>
+        <p className="mt-1 text-[13px] text-faint">Public on-chain activity only. Private offers and negotiations are never shown here.</p>
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel>
           <PanelHeader title="Tokens created" />
           {!data.createdTokens.length ? <Empty title="No tokens created" /> : (
-            <ul className="divide-y divide-line">
+            <ul className="m-2 divide-y divide-line bg-ink bevel-in">
               {data.createdTokens.map((t) => (
                 <li key={t.mint}>
-                  <Link href={`/token/${t.mint}`} className="flex items-center gap-3 px-4 py-3 hover:bg-hover/60">
+                  <Link href={`/token/${t.mint}`} className="flex items-center gap-3 px-4 py-3 hover:bg-hover">
                     <TokenAvatar src={t.imageUrl} symbol={t.symbol} size={24} />
                     <span className="font-medium">{t.symbol}</span>
                     <span className="truncate text-muted">{t.name}</span>
@@ -54,10 +54,10 @@ export function WalletProfile({ address }: { address: string }) {
         <Panel>
           <PanelHeader title="Public OTC orders" />
           {!data.publicOrders.length ? <Empty title="No open public orders" /> : (
-            <ul className="divide-y divide-line">
+            <ul className="m-2 divide-y divide-line bg-ink bevel-in">
               {data.publicOrders.map((o) => (
                 <li key={o.id}>
-                  <Link href={`/deal/${o.publicId}`} className="flex items-center gap-3 px-4 py-3 hover:bg-hover/60">
+                  <Link href={`/deal/${o.publicId}`} className="flex items-center gap-3 px-4 py-3 hover:bg-hover">
                     <SideBadge side={o.side} />
                     <span className="min-w-0 flex-1 truncate">{o.token.symbol} <Tokens raw={o.remainingAmountRaw} decimals={o.token.decimals} /> for <Sol lamports={o.quoteAmountRaw} digits={3} /></span>
                     <StatusPill status={o.status} />
@@ -71,14 +71,14 @@ export function WalletProfile({ address }: { address: string }) {
       <Panel>
         <PanelHeader title="Completed public OTC trades" />
         {!data.otcTrades.length ? <Empty title="No public OTC trades" /> : (
-          <ul className="divide-y divide-line">
+          <ul className="m-2 divide-y divide-line bg-ink bevel-in">
             {data.otcTrades.map((t) => (
               <li key={t.txSignature}>
-                <Link href={`/trade/${t.txSignature}`} className="flex flex-wrap items-center gap-x-4 px-4 py-3 hover:bg-hover/60">
+                <Link href={`/trade/${t.txSignature}`} className="flex flex-wrap items-center gap-x-4 px-4 py-3 hover:bg-hover">
                   <span className={t.seller === address ? "text-sell" : "text-buy"}>{t.seller === address ? "Sold" : "Bought"}</span>
                   <Tokens raw={t.tokenAmountRaw} decimals={t.decimals} symbol={t.symbol} />
                   <Sol lamports={t.grossQuoteLamports} digits={3} />
-                  <span className="ml-auto text-[12px] text-muted">{t.blockTime ? relativeTime(t.blockTime) : ""}</span>
+                  <span className="ml-auto text-[13px] text-muted">{t.blockTime ? relativeTime(t.blockTime) : ""}</span>
                 </Link>
               </li>
             ))}
@@ -88,7 +88,7 @@ export function WalletProfile({ address }: { address: string }) {
       <Panel>
         <PanelHeader title="Recent Pump activity (indexed)" />
         {!data.activity.length ? <Empty title="No indexed trades" /> : (
-          <ul className="divide-y divide-line">
+          <ul className="m-2 divide-y divide-line bg-ink bevel-in">
             {data.activity.map((a) => (
               <li key={a.signature} className="flex flex-wrap items-center gap-x-4 px-4 py-2.5 text-[13px]">
                 <span className={a.side === "BUY" ? "text-buy" : "text-sell"}>{a.side === "BUY" ? "Buy" : "Sell"}</span>

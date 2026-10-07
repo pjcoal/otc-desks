@@ -42,16 +42,16 @@ export function Portfolio() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="title-display text-[44px] leading-none">Portfolio</h1>
+          <h1 className="title-display text-[30px] leading-none">Portfolio</h1>
           <p className="mt-2 flex items-center gap-2 text-muted"><Address value={data.wallet} chars={6} /></p>
         </div>
         <dl className="flex gap-8">
           <div>
-            <dt className="text-[12px] text-muted">SOL balance</dt>
+            <dt className="text-[13px] text-muted">SOL balance</dt>
             <dd className="text-[22px]"><Sol lamports={data.solLamports} /></dd>
           </div>
           <div>
-            <dt className="text-[12px] text-muted">Pump positions (estimate)</dt>
+            <dt className="text-[13px] text-muted">Pump positions (estimate)</dt>
             <dd className="text-[22px]"><Sol lamports={total} /></dd>
           </div>
         </dl>
@@ -68,21 +68,21 @@ export function Portfolio() {
         {!data.positions.length ? (
           <Empty title="No Pump tokens in this wallet">Tokens appear once you hold a Pump coin this app has indexed.</Empty>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="m-2 overflow-x-auto bg-ink bevel-in">
             <table className="w-full min-w-[720px] text-[13px]">
-              <thead className="text-left text-[12px] text-faint">
-                <tr className="border-b border-line">
-                  <th className="px-4 py-2 font-medium">Token</th>
-                  <th className="px-2 py-2 font-medium">Balance</th>
-                  <th className="px-2 py-2 font-medium">Price</th>
-                  <th className="px-2 py-2 font-medium">Est. value</th>
-                  <th className="px-2 py-2 font-medium">PnL</th>
-                  <th className="px-4 py-2 font-medium">Venue</th>
+              <thead className="text-left text-[13px] text-text">
+                <tr>
+                  <th className="px-4 py-2 bg-panel font-normal bevel-out">Token</th>
+                  <th className="px-2 py-2 bg-panel font-normal bevel-out">Balance</th>
+                  <th className="px-2 py-2 bg-panel font-normal bevel-out">Price</th>
+                  <th className="px-2 py-2 bg-panel font-normal bevel-out">Est. value</th>
+                  <th className="px-2 py-2 bg-panel font-normal bevel-out">PnL</th>
+                  <th className="px-4 py-2 bg-panel font-normal bevel-out">Venue</th>
                 </tr>
               </thead>
               <tbody>
                 {data.positions.map((p) => (
-                  <tr key={p.mint} className="border-b border-line/60 hover:bg-hover/60">
+                  <tr key={p.mint} className="border-b border-line/60 hover:bg-hover">
                     <td className="px-4 py-2.5">
                       <Link href={`/token/${p.mint}`} className="flex items-center gap-2"><TokenAvatar src={p.imageUrl} symbol={p.symbol} size={24} />{p.symbol} <DemoBadge show={p.isDemo} /></Link>
                     </td>
@@ -97,7 +97,7 @@ export function Portfolio() {
                 ))}
               </tbody>
             </table>
-            <p className="px-4 py-2 text-[12px] text-faint">Values use the latest indexed Pump price and ignore slippage. PnL is shown only when your indexed trades fully explain your balance.</p>
+            <p className="px-4 py-2 text-[13px] text-faint">Values use the latest indexed Pump price and ignore slippage. PnL is shown only when your indexed trades fully explain your balance.</p>
           </div>
         )}
       </Panel>
@@ -106,10 +106,10 @@ export function Portfolio() {
         <Panel>
           <PanelHeader title="Open orders" />
           {!data.openOrders.length ? <Empty title="No open orders" /> : (
-            <ul className="divide-y divide-line">
+            <ul className="m-2 divide-y divide-line bg-ink bevel-in">
               {data.openOrders.map((o) => (
                 <li key={o.id}>
-                  <Link href={`/deal/${o.publicId}`} className="flex items-center gap-3 px-4 py-3 hover:bg-hover/60">
+                  <Link href={`/deal/${o.publicId}`} className="flex items-center gap-3 px-4 py-3 hover:bg-hover">
                     <SideBadge side={o.side} />
                     <span className="min-w-0 flex-1 truncate">{o.token.symbol} <Tokens raw={o.remainingAmountRaw} decimals={o.token.decimals} /> for <Sol lamports={o.quoteAmountRaw} digits={3} /></span>
                     <StatusPill status={o.status} />
@@ -122,12 +122,12 @@ export function Portfolio() {
         <Panel>
           <PanelHeader title="Pending negotiations" />
           {!wallet ? <Empty title="Sign in to see negotiations" /> : !pending.length ? <Empty title="Nothing pending" /> : (
-            <ul className="divide-y divide-line">
+            <ul className="m-2 divide-y divide-line bg-ink bevel-in">
               {pending.map((n) => {
                 const latest = n.revisions[n.revisions.length - 1]!;
                 return (
                   <li key={n.id}>
-                    <Link href={`/deal/${latest.publicId}`} className="flex items-center gap-3 px-4 py-3 hover:bg-hover/60">
+                    <Link href={`/deal/${latest.publicId}`} className="flex items-center gap-3 px-4 py-3 hover:bg-hover">
                       <span className="min-w-0 flex-1 truncate">{latest.token.symbol} revision {latest.revision}: <Sol lamports={latest.quoteAmountRaw} digits={3} /></span>
                       <StatusPill status={latest.status} />
                     </Link>
@@ -142,14 +142,14 @@ export function Portfolio() {
       <Panel>
         <PanelHeader title="OTC trade history" />
         {!data.otcHistory.length ? <Empty title="No OTC trades yet" /> : (
-          <ul className="divide-y divide-line">
+          <ul className="m-2 divide-y divide-line bg-ink bevel-in">
             {data.otcHistory.map((t) => (
               <li key={t.txSignature}>
-                <Link href={`/trade/${t.txSignature}`} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 hover:bg-hover/60">
+                <Link href={`/trade/${t.txSignature}`} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 hover:bg-hover">
                   <span className={t.seller === data.wallet ? "text-sell" : "text-buy"}>{t.seller === data.wallet ? "Sold" : "Bought"}</span>
                   <Tokens raw={t.tokenAmountRaw} decimals={t.decimals} symbol={t.symbol} />
                   <Sol lamports={t.grossQuoteLamports} digits={3} />
-                  <span className="ml-auto text-[12px] text-muted">{t.blockTime ? relativeTime(t.blockTime) : ""}</span>
+                  <span className="ml-auto text-[13px] text-muted">{t.blockTime ? relativeTime(t.blockTime) : ""}</span>
                 </Link>
               </li>
             ))}
@@ -160,14 +160,14 @@ export function Portfolio() {
       <Panel>
         <PanelHeader title="Tokens you created" />
         {!data.createdTokens.length ? <Empty title="You haven't launched a token" action={<Link href="/launch" className="text-glacier hover:underline">Launch one</Link>} /> : (
-          <ul className="divide-y divide-line">
+          <ul className="m-2 divide-y divide-line bg-ink bevel-in">
             {data.createdTokens.map((t) => (
               <li key={t.mint}>
-                <Link href={`/token/${t.mint}`} className="flex items-center gap-3 px-4 py-3 hover:bg-hover/60">
+                <Link href={`/token/${t.mint}`} className="flex items-center gap-3 px-4 py-3 hover:bg-hover">
                   <TokenAvatar src={t.imageUrl} symbol={t.symbol} size={24} />
                   <span>{t.symbol}</span>
                   <VenueBadge venue={t.venue} />
-                  <span className="ml-auto text-[12px] text-muted">{relativeTime(t.createdAt)}</span>
+                  <span className="ml-auto text-[13px] text-muted">{relativeTime(t.createdAt)}</span>
                 </Link>
               </li>
             ))}

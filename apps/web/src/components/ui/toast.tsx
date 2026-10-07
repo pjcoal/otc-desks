@@ -36,16 +36,19 @@ export const toast = {
 export function Toaster() {
   const { toasts, dismiss } = useToasts();
   return (
-    <div className="pointer-events-none fixed bottom-4 right-4 z-[60] flex w-[min(380px,calc(100vw-32px))] flex-col gap-2" aria-live="polite">
+    <div className="pointer-events-none fixed bottom-12 right-3 z-[60] flex w-[min(380px,calc(100vw-32px))] flex-col gap-2" aria-live="polite">
       {toasts.map((t) => (
-        <div key={t.id} role={t.tone === "error" ? "alert" : "status"} className={cn("panel pointer-events-auto flex items-start gap-3 border-l-2 px-4 py-3 shadow-xl", t.tone === "success" ? "border-l-buy" : t.tone === "error" ? "border-l-sell" : "border-l-glacier")}>
-          <div className="min-w-0 flex-1">
-            <p className="font-medium">{t.title}</p>
+        <div key={t.id} role={t.tone === "error" ? "alert" : "status"} className="panel pointer-events-auto shadow-[4px_4px_0_rgba(0,0,0,0.35)]">
+          <div className={cn("titlebar flex h-6 items-center gap-2 px-1.5 text-[13px]", t.tone === "error" && "bg-sell", t.tone === "success" && "bg-buy")}>
+            <span className="flex-1">{t.tone === "error" ? "Error" : t.tone === "success" ? "Done" : "Message"}</span>
+            <button onClick={() => dismiss(t.id)} className="flex size-4 items-center justify-center bg-panel text-text bevel-out active:bevel-in" aria-label="Dismiss">
+              <X className="size-3" />
+            </button>
+          </div>
+          <div className="px-3 py-2">
+            <p className="font-semibold">{t.title}</p>
             {t.body && <p className="mt-0.5 break-words text-[13px] text-muted">{t.body}</p>}
           </div>
-          <button onClick={() => dismiss(t.id)} className="text-faint hover:text-text" aria-label="Dismiss">
-            <X className="size-4" />
-          </button>
         </div>
       ))}
     </div>

@@ -57,7 +57,7 @@ export function Explore() {
 
   return (
     <div className="space-y-5">
-      <h1 className="title-display text-[44px] leading-none">Explore</h1>
+      <h1 className="title-display text-[30px] leading-none">Explore</h1>
       <Tabs value={section} onValueChange={(v) => { setSection(v as SectionId); router.replace(`/explore?s=${v}`, { scroll: false }); }}>
         <TabsList>
           {SECTIONS.map((s) => (
@@ -77,10 +77,10 @@ export function Explore() {
         {data?.kind === "tokens" && <TokenTable items={tokens} emptyTitle="Nothing here yet" emptyBody="This list fills from indexed on-chain activity. We never pad it with made-up data." />}
         {data?.kind === "otc_activity" &&
           (data.items.length ? (
-            <ul className="divide-y divide-line">
+            <ul className="m-2 divide-y divide-line bg-ink bevel-in">
               {data.items.map((r) => (
                 <li key={r.token.mint}>
-                  <Link href={`/token/${r.token.mint}`} className="flex items-center gap-3 px-4 py-3 hover:bg-hover/60">
+                  <Link href={`/token/${r.token.mint}`} className="flex items-center gap-3 px-4 py-3 hover:bg-hover">
                     <TokenAvatar src={r.token.imageUrl} symbol={r.token.symbol} size={28} />
                     <span className="font-medium">{r.token.symbol}</span>
                     <span className="text-muted">{r.token.name}</span>
@@ -94,10 +94,10 @@ export function Explore() {
           ))}
         {data?.kind === "otc_orders" &&
           (data.items.length ? (
-            <ul className="divide-y divide-line">
+            <ul className="m-2 divide-y divide-line bg-ink bevel-in">
               {data.items.map(({ order: o, discountPct }) => (
                 <li key={o.id}>
-                  <Link href={`/deal/${o.publicId}`} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 hover:bg-hover/60">
+                  <Link href={`/deal/${o.publicId}`} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 hover:bg-hover">
                     <TokenAvatar src={o.token.imageUrl} symbol={o.token.symbol} size={24} />
                     <span className="font-medium">{o.token.symbol}</span>
                     <Tokens raw={o.tokenAmountRaw} decimals={o.token.decimals} />
@@ -114,14 +114,14 @@ export function Explore() {
           ))}
         {data?.kind === "otc_trades" &&
           (data.items.length ? (
-            <ul className="divide-y divide-line">
+            <ul className="m-2 divide-y divide-line bg-ink bevel-in">
               {data.items.map(({ settlement: s, token }) => (
                 <li key={s.txSignature}>
-                  <Link href={`/trade/${s.txSignature}`} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 hover:bg-hover/60">
+                  <Link href={`/trade/${s.txSignature}`} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 hover:bg-hover">
                     <span className="font-medium">{token?.symbol ?? "Token"}</span>
                     <Tokens raw={s.tokenAmountRaw} decimals={s.tokenDecimals} />
                     <Sol lamports={s.grossQuoteLamports} digits={2} />
-                    <span className="ml-auto text-[12px] text-muted">{s.blockTime ? relativeTime(s.blockTime) : ""}</span>
+                    <span className="ml-auto text-[13px] text-muted">{s.blockTime ? relativeTime(s.blockTime) : ""}</span>
                   </Link>
                 </li>
               ))}

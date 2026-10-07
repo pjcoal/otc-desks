@@ -49,10 +49,10 @@ export default function AdminPage() {
   if (isLoading || !data) return <Skeleton className="h-96" />;
   return (
     <div className="space-y-5">
-      <h1 className="title-display text-[44px] leading-none">Operations</h1>
+      <h1 className="title-display text-[30px] leading-none">Operations</h1>
       <div className="grid gap-4 md:grid-cols-4">
         {[["Users", data.users], ["Active sessions", data.activeSessions], ["Launches", data.launches], ["OTC trades", data.otcTradeCount]].map(([k, v]) => (
-          <Panel key={k} className="p-4"><p className="text-[12px] text-muted">{k}</p><p className="num text-[24px]">{v}</p></Panel>
+          <Panel key={k} className="p-4"><p className="text-[13px] text-muted">{k}</p><p className="num text-[24px]">{v}</p></Panel>
         ))}
       </div>
       <div className="grid gap-4 lg:grid-cols-3">

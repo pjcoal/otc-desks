@@ -28,29 +28,29 @@ function OrderTable({ mint, orders, side, marketPrice, symbol }: { mint: string;
       </Empty>
     );
   return (
-    <div className="overflow-x-auto">
+    <div className="m-2 overflow-x-auto bg-ink bevel-in">
       <table className="w-full min-w-[720px] text-[13px]">
-        <thead className="text-left text-[12px] text-faint">
-          <tr className="border-b border-line">
-            <th className="px-4 py-2 font-medium">Quantity</th>
-            <th className="px-2 py-2 font-medium">Price / token</th>
-            <th className="px-2 py-2 font-medium">Total</th>
-            <th className="px-2 py-2 font-medium">vs market</th>
-            <th className="px-2 py-2 font-medium">Maker</th>
-            <th className="px-2 py-2 font-medium">Expires</th>
-            <th className="px-4 py-2 font-medium text-right">Posted</th>
+        <thead className="text-left text-[13px] text-text">
+          <tr>
+            <th className="px-4 py-2 bg-panel font-normal bevel-out">Quantity</th>
+            <th className="px-2 py-2 bg-panel font-normal bevel-out">Price / token</th>
+            <th className="px-2 py-2 bg-panel font-normal bevel-out">Total</th>
+            <th className="px-2 py-2 bg-panel font-normal bevel-out">vs market</th>
+            <th className="px-2 py-2 bg-panel font-normal bevel-out">Maker</th>
+            <th className="px-2 py-2 bg-panel font-normal bevel-out">Expires</th>
+            <th className="px-4 py-2 bg-panel font-normal bevel-out text-right">Posted</th>
           </tr>
         </thead>
         <tbody>
           {orders.map((o) => {
             const prem = premium(o.priceSolPerToken, marketPrice);
             return (
-              <tr key={o.id} className="border-b border-line/60 hover:bg-hover/60">
+              <tr key={o.id} className="border-b border-line/60 hover:bg-hover">
                 <td className="px-4 py-2.5">
                   <Link href={`/deal/${o.publicId}`} className="hover:underline">
                     <Tokens raw={o.remainingAmountRaw} decimals={o.token.decimals} symbol={symbol} />
                   </Link>
-                  {o.allowPartialFill && <span className="ml-1.5 text-[11px] text-faint">partial ok</span>} <DemoBadge show={o.isDemo} />
+                  {o.allowPartialFill && <span className="ml-1.5 text-[12px] text-faint">partial ok</span>} <DemoBadge show={o.isDemo} />
                 </td>
                 <td className="num px-2 py-2.5">{price(o.priceSolPerToken)}</td>
                 <td className="px-2 py-2.5"><Sol lamports={o.quoteAmountRaw} digits={3} /></td>
@@ -75,7 +75,7 @@ export function OtcBook({ mint, symbol, marketPrice, marketAt }: { mint: string;
   const sortedBids = [...(bids.data?.items ?? [])].sort((a, b) => new D(b.priceSolPerToken).cmp(new D(a.priceSolPerToken)));
   return (
     <div className="space-y-6">
-      <p className="px-4 pt-4 text-[12px] text-faint">
+      <p className="px-4 pt-4 text-[13px] text-faint">
         Premium / discount compares each OTC price with the Pump market price of {price(marketPrice)} SOL{marketAt ? ` at ${new Date(marketAt).toLocaleTimeString()}` : ""}. A reference price is not a price you could execute size at.
       </p>
       <section>
@@ -97,15 +97,15 @@ export function OtcBook({ mint, symbol, marketPrice, marketAt }: { mint: string;
         {!trades.data?.otc.length ? (
           <Empty title="No OTC trades settled yet">Settled block trades appear here with links to their on-chain receipts.</Empty>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="m-2 overflow-x-auto bg-ink bevel-in">
             <table className="w-full min-w-[640px] text-[13px]">
-              <thead className="text-left text-[12px] text-faint">
-                <tr className="border-b border-line">
-                  <th className="px-4 py-2 font-medium">Quantity</th>
-                  <th className="px-2 py-2 font-medium">Total</th>
-                  <th className="px-2 py-2 font-medium">Seller</th>
-                  <th className="px-2 py-2 font-medium">Buyer</th>
-                  <th className="px-4 py-2 text-right font-medium">Settled</th>
+              <thead className="text-left text-[13px] text-text">
+                <tr>
+                  <th className="px-4 py-2 bg-panel font-normal bevel-out">Quantity</th>
+                  <th className="px-2 py-2 bg-panel font-normal bevel-out">Total</th>
+                  <th className="px-2 py-2 bg-panel font-normal bevel-out">Seller</th>
+                  <th className="px-2 py-2 bg-panel font-normal bevel-out">Buyer</th>
+                  <th className="px-4 py-2 text-right bg-panel font-normal bevel-out">Settled</th>
                 </tr>
               </thead>
               <tbody>

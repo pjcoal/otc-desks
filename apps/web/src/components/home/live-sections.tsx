@@ -28,15 +28,15 @@ export function RecentTrades() {
       {!data?.trades.length ? (
         <Empty title="No block trades yet">Settled OTC trades show up here with verifiable receipts.</Empty>
       ) : (
-        <ul className="divide-y divide-line">
+        <ul className="m-2 divide-y divide-line bg-ink bevel-in">
           {data.trades.map((t) => (
             <li key={t.txSignature}>
-              <Link href={`/trade/${t.txSignature}`} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 hover:bg-hover/60">
+              <Link href={`/trade/${t.txSignature}`} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 hover:bg-hover">
                 <span className="w-20 font-medium">{t.symbol}</span>
                 <Tokens raw={t.tokenAmountRaw} decimals={t.decimals} />
                 <Sol lamports={t.grossQuoteLamports} digits={2} />
                 <DemoBadge show={t.isDemo} />
-                <span className="ml-auto text-[12px] text-muted">{t.blockTime ? relativeTime(t.blockTime) : ""}</span>
+                <span className="ml-auto text-[13px] text-muted">{t.blockTime ? relativeTime(t.blockTime) : ""}</span>
               </Link>
             </li>
           ))}

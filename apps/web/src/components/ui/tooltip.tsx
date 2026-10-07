@@ -4,11 +4,11 @@ import type { ReactNode } from "react";
 
 export function Tip({ content, children }: { content: ReactNode; children: ReactNode }) {
   return (
-    <T.Provider delayDuration={150}>
+    <T.Provider delayDuration={300}>
       <T.Root>
         <T.Trigger asChild>{children}</T.Trigger>
         <T.Portal>
-          <T.Content sideOffset={6} className="z-50 max-w-xs rounded-md border border-line bg-raised px-2.5 py-1.5 text-[12px] text-text shadow-lg">
+          <T.Content sideOffset={6} className="z-50 max-w-xs border border-text bg-[#ffffe1] px-2 py-1 text-[13px] text-text">
             {content}
           </T.Content>
         </T.Portal>

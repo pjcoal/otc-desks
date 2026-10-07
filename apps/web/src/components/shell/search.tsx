@@ -46,7 +46,7 @@ export function Search() {
           } else if (data?.results[0]) router.push(`/token/${data.results[0].mint}`);
         }}
       >
-        <label className="flex h-8 items-center gap-2 rounded-[var(--radius-control)] border border-line bg-ink px-2.5 focus-within:border-glacier">
+        <label className="flex h-7 items-center gap-2 bg-ink px-2 bevel-in">
           <SearchIcon className="size-4 text-faint" />
           <input
             value={q}
@@ -63,15 +63,15 @@ export function Search() {
         </label>
       </form>
       {open && debounced.length >= 2 && (
-        <div className="panel absolute left-0 right-0 top-10 z-40 max-h-96 overflow-y-auto p-1 shadow-xl">
+        <div className="panel absolute left-0 right-0 top-8 z-40 max-h-96 overflow-y-auto shadow-[4px_4px_0_rgba(0,0,0,0.35)]">
           {isFetching && !data && <p className="px-3 py-2 text-muted">Searching…</p>}
           {data && data.results.length === 0 && <p className="px-3 py-2 text-muted">{isBase58PublicKey(debounced) ? "No Pump token found at that mint on this network." : "No matches."}</p>}
           {data?.results.map((r) => (
-            <Link key={r.mint} href={`/token/${r.mint}`} onClick={() => setOpen(false)} className="flex items-center gap-2.5 rounded px-2.5 py-2 hover:bg-hover">
+            <Link key={r.mint} href={`/token/${r.mint}`} onClick={() => setOpen(false)} className="group flex items-center gap-2.5 px-2.5 py-1.5 hover:bg-select hover:text-white">
               <TokenAvatar src={r.imageUrl} symbol={r.symbol} size={26} />
               <span className="min-w-0 flex-1">
                 <span className="block truncate font-medium">{r.symbol}</span>
-                <span className="block truncate text-[12px] text-muted">
+                <span className="block truncate text-[13px] text-muted group-hover:text-white/80">
                   {r.name} <span className="font-mono">{shortAddress(r.mint)}</span>
                 </span>
               </span>
