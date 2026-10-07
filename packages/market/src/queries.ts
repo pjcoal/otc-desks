@@ -33,7 +33,6 @@ export async function candles(db: Db, mint: string, tf: Timeframe, limit = 300):
       FROM "Trade" WHERE mint = ${mint}
     ) t
     GROUP BY bucket ORDER BY bucket DESC LIMIT ${limit}`;
-  // Per-mint queries need no demo filter: a mint's trades are either all real or all demo (DEMO_MODE seed).
   const first = await db.trade.findFirst({ where: { mint }, orderBy: { blockTime: "asc" }, select: { blockTime: true } });
   return {
     candles: rows.reverse().map((r) => ({
@@ -64,21 +63,21 @@ export async function recentTrades(db: Db, mint: string, limit = 50) {
   }));
 }
 
-const tokenCard = { mint: true, name: true, symbol: true, imageUrl: true, decimals: true, venue: true, complete: true, createdAt: true, graduatedAt: true, creator: true, isDemo: true, market: true } as const;
+const tokenCard = { mint: true, name: true, symbol: true, imageUrl: true, decimals: true, venue: true, complete: true, createdAt: true, graduatedAt: true, creator: true, market: true } as const;
 
 export type SearchResult = Awaited<ReturnType<typeof searchTokens>>[number];
 
 /** Mint addresses always resolve directly (exact key lookup); text search uses prefix/contains on indexed columns. */
-export async function searchTokens(db: Db, q: string, includeDemo: boolean, limit = 12) {
+export async function searchTokens(db: Db, q: string, limit = 12) {
   const term = q.trim().slice(0, 64);
   if (term.length === 0) return [];
   if (isBase58PublicKey(term)) {
-    const exact = await db.token.findUnique({ where: { mint: term }, select: tokenCard });
+    const exact = await db.token.findFirst({ where: { mint: term, isDemo: false }, select: tokenCard });
     return exact ? [exact] : [];
   }
   return db.token.findMany({
     where: {
-      ...(includeDemo ? {} : { isDemo: false }),
+      isDemo: false,
       OR: [{ symbol: { startsWith: term, mode: "insensitive" } }, { name: { contains: term, mode: "insensitive" } }],
     },
     select: tokenCard,
@@ -89,31 +88,32 @@ export async function searchTokens(db: Db, q: string, includeDemo: boolean, limi
 
 export type ExploreSection = "trending" | "new" | "near_graduation" | "recently_graduated" | "most_otc" | "largest_discounts" | "largest_otc_trades";
 
-export async function explore(db: Db, section: ExploreSection, includeDemo: boolean, limit = 24) {
-  const demo = includeDemo ? {} : { isDemo: false };
+export async function explore(db: Db, section: ExploreSection, limit = 24) {
+  // `isDemo` marks end-to-end test fixtures only; they never appear in listings.
+  const noFixtures = { isDemo: false };
   switch (section) {
     case "trending":
       return {
         kind: "tokens" as const,
         items: await db.token.findMany({
-          where: { ...demo, lastTradeAt: { gte: new Date(Date.now() - 86_400_000) } },
+          where: { ...noFixtures, lastTradeAt: { gte: new Date(Date.now() - 86_400_000) } },
           select: tokenCard,
           orderBy: [{ market: { volume24hLamports: "desc" } }, { lastTradeAt: "desc" }],
           take: limit,
         }),
       };
     case "new":
-      return { kind: "tokens" as const, items: await db.token.findMany({ where: demo, select: tokenCard, orderBy: { createdAt: "desc" }, take: limit }) };
+      return { kind: "tokens" as const, items: await db.token.findMany({ where: noFixtures, select: tokenCard, orderBy: { createdAt: "desc" }, take: limit }) };
     case "near_graduation":
       return {
         kind: "tokens" as const,
-        items: await db.token.findMany({ where: { ...demo, venue: "PUMP_BONDING_CURVE", market: { bondingProgressBps: { gte: 5000, lt: 10_000 } } }, select: tokenCard, orderBy: { market: { bondingProgressBps: "desc" } }, take: limit }),
+        items: await db.token.findMany({ where: { ...noFixtures, venue: "PUMP_BONDING_CURVE", market: { bondingProgressBps: { gte: 5000, lt: 10_000 } } }, select: tokenCard, orderBy: { market: { bondingProgressBps: "desc" } }, take: limit }),
       };
     case "recently_graduated":
-      return { kind: "tokens" as const, items: await db.token.findMany({ where: { ...demo, venue: "PUMPSWAP", graduatedAt: { not: null } }, select: tokenCard, orderBy: { graduatedAt: "desc" }, take: limit }) };
+      return { kind: "tokens" as const, items: await db.token.findMany({ where: { ...noFixtures, venue: "PUMPSWAP", graduatedAt: { not: null } }, select: tokenCard, orderBy: { graduatedAt: "desc" }, take: limit }) };
     case "most_otc": {
       const since = new Date(Date.now() - 7 * 86_400_000);
-      const grouped = await db.otcOrder.groupBy({ by: ["tokenMint"], where: { ...demo, takerWallet: null, createdAt: { gte: since } }, _count: { _all: true }, orderBy: { _count: { tokenMint: "desc" } }, take: limit });
+      const grouped = await db.otcOrder.groupBy({ by: ["tokenMint"], where: { ...noFixtures, takerWallet: null, createdAt: { gte: since } }, _count: { _all: true }, orderBy: { _count: { tokenMint: "desc" } }, take: limit });
       const tokens = await db.token.findMany({ where: { mint: { in: grouped.map((g) => g.tokenMint) } }, select: tokenCard });
       const byMint = new Map(tokens.map((t) => [t.mint, t]));
       return { kind: "otc_activity" as const, items: grouped.map((g) => ({ token: byMint.get(g.tokenMint) ?? null, orders7d: g._count._all })).filter((g) => g.token) };
@@ -124,14 +124,14 @@ export async function explore(db: Db, section: ExploreSection, includeDemo: bool
         SELECT id, "tokenMint", (("priceDecimal" - "refPriceSolPerToken") / "refPriceSolPerToken" * 100) AS discount
         FROM "OtcOrder"
         WHERE status IN ('OPEN','PARTIALLY_FILLED') AND side = 'SELL' AND "takerWallet" IS NULL AND "expiresAt" > now()
-          AND "refPriceSolPerToken" > 0 AND (${includeDemo} OR "isDemo" = false)
+          AND "refPriceSolPerToken" > 0 AND "isDemo" = false
         ORDER BY discount ASC LIMIT ${limit}`;
       const orders = await db.otcOrder.findMany({ where: { id: { in: rows.map((r) => r.id) } }, include: { token: true } });
       const byId = new Map(orders.map((o) => [o.id, o]));
       return { kind: "otc_orders" as const, items: rows.map((r) => ({ order: byId.get(r.id)!, discountPct: r.discount.toFixed(2) })).filter((r) => r.order) };
     }
     case "largest_otc_trades": {
-      const s = await db.otcSettlement.findMany({ where: { ...demo, status: { in: ["CONFIRMED", "FINALIZED"] } }, orderBy: { grossQuoteLamports: "desc" }, take: limit });
+      const s = await db.otcSettlement.findMany({ where: { ...noFixtures, status: { in: ["CONFIRMED", "FINALIZED"] } }, orderBy: { grossQuoteLamports: "desc" }, take: limit });
       const tokens = await db.token.findMany({ where: { mint: { in: s.map((x) => x.tokenMint) } }, select: tokenCard });
       const byMint = new Map(tokens.map((t) => [t.mint, t]));
       return { kind: "otc_trades" as const, items: s.map((x) => ({ settlement: x, token: byMint.get(x.tokenMint) ?? null })) };
@@ -139,11 +139,11 @@ export async function explore(db: Db, section: ExploreSection, includeDemo: bool
   }
 }
 
-export async function recentOtcTrades(db: Db, opts: { mint?: string; wallet?: string; includeDemo: boolean; limit?: number; publicOnly?: boolean }) {
+export async function recentOtcTrades(db: Db, opts: { mint?: string; wallet?: string; limit?: number; publicOnly?: boolean }) {
   const rows = await db.otcSettlement.findMany({
     where: {
       status: { in: ["CONFIRMED", "FINALIZED"] },
-      ...(opts.includeDemo ? {} : { isDemo: false }),
+      isDemo: false,
       ...(opts.mint ? { tokenMint: opts.mint } : {}),
       ...(opts.wallet ? { OR: [{ sellerWallet: opts.wallet }, { buyerWallet: opts.wallet }] } : {}),
       // Trades from private deals are public on-chain, but we only list them to their own parties.
@@ -166,6 +166,5 @@ export async function recentOtcTrades(db: Db, opts: { mint?: string; wallet?: st
     buyer: r.buyerWallet,
     refPriceSolPerToken: r.refPriceSolPerToken?.toFixed() ?? null,
     blockTime: r.blockTime?.toISOString() ?? null,
-    isDemo: r.isDemo,
   }));
 }

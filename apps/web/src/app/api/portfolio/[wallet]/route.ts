@@ -6,7 +6,7 @@ import { getRpc } from "@app/solana/server";
 import { recentOtcTrades } from "@app/market";
 import { listOrders } from "@app/otc/server";
 import { route } from "@/server/http";
-import { config, otcContext } from "@/server/context";
+import { otcContext } from "@/server/context";
 import { zAddress } from "@/server/schemas";
 
 /**
@@ -32,7 +32,7 @@ export const GET = route<{ wallet: string }>({ auth: "optional" }, async ({ para
       return { mint: info.mint, amountRaw: BigInt(info.tokenAmount.amount), decimals: info.tokenAmount.decimals };
     })
     .filter((h) => h.amountRaw > 0n);
-  const tokens = await db.token.findMany({ where: { mint: { in: holdings.map((h) => h.mint) } }, include: { market: true } });
+  const tokens = await db.token.findMany({ where: { mint: { in: holdings.map((h) => h.mint) }, isDemo: false }, include: { market: true } });
   const byMint = new Map(tokens.map((t) => [t.mint, t]));
   const positions = [];
   for (const h of holdings) {
@@ -59,14 +59,13 @@ export const GET = route<{ wallet: string }>({ auth: "optional" }, async ({ para
       estimatedValueLamports: valueLamports,
       pnlLamports: pnl,
       costBasisNote: explained ? "Derived from indexed Pump/PumpSwap trades." : "Unavailable: this balance includes transfers or trades outside our index.",
-      isDemo: t.isDemo,
     });
   }
   const ctx = otcContext();
   const [openOrders, created, history] = await Promise.all([
     listOrders(ctx, { maker: owner, mine: isSelf, status: ["OPEN", "NEGOTIATING", "ACCEPTED", "SETTLEMENT_READY", "PARTIALLY_FILLED"], limit: 50 }, isSelf ? owner : null),
-    db.token.findMany({ where: { creator: owner }, orderBy: { createdAt: "desc" }, take: 50, include: { market: true } }),
-    recentOtcTrades(db, { wallet: owner, includeDemo: config().DEMO_MODE, limit: 50, publicOnly: !isSelf }),
+    db.token.findMany({ where: { creator: owner, isDemo: false }, orderBy: { createdAt: "desc" }, take: 50, include: { market: true } }),
+    recentOtcTrades(db, { wallet: owner, limit: 50, publicOnly: !isSelf }),
   ]);
   return {
     wallet: owner,

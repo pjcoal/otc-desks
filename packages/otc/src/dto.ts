@@ -45,7 +45,6 @@ export interface OrderView {
   /** Signed payload + signature so clients can verify the maker's signature themselves. */
   payload: OrderPayload;
   signature: string;
-  isDemo: boolean;
 }
 
 export interface MarketRef {

@@ -35,6 +35,3 @@ export function VenueBadge({ venue }: { venue: string }) {
   return <Badge tone="outline">No Pump market</Badge>;
 }
 
-export function DemoBadge({ show }: { show: boolean }) {
-  return show ? <Badge tone="warn" title="Demo data generated for UI development. Not real market activity.">Demo data</Badge> : null;
-}

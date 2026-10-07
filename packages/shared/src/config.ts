@@ -79,7 +79,6 @@ export const serverEnvSchema = z
     BLOCKED_REGIONS: csv,
     /** Number of trusted reverse proxies in front of the app (X-Forwarded-For is read from the right). */
     TRUSTED_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(1),
-    DEMO_MODE: bool(false),
     INDEXER_MODE: z.enum(["firehose", "tracked"]).default("firehose"),
     /** Optional, unofficial discovery source (mainnet only). Prices/settlement always come from chain. */
     PUMP_DISCOVERY_API: bool(false),
@@ -98,7 +97,6 @@ export const serverEnvSchema = z
     if (env.SOLANA_CLUSTER === "mainnet-beta" && env.ALLOW_MAINNET) {
       if (env.MAINNET_CHECKLIST_COMPLETED !== "yes") issue("MAINNET_CHECKLIST_COMPLETED", 'set to "yes" only after completing docs/mainnet-checklist.md');
       if (!env.SIMULATE_TRANSACTIONS) issue("SIMULATE_TRANSACTIONS", "must be true on mainnet");
-      if (env.DEMO_MODE) issue("DEMO_MODE", "demo mode cannot run against mainnet");
       if (!env.SOLANA_RPC_FALLBACK_URL) issue("SOLANA_RPC_FALLBACK_URL", "a fallback RPC is required on mainnet");
       if (!env.REDIS_URL) issue("REDIS_URL", "Redis is required on mainnet (rate limits, locks)");
       if (env.SESSION_SECRET === DEV_SESSION_SECRET) issue("SESSION_SECRET", "must be set on mainnet");

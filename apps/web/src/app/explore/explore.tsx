@@ -12,7 +12,6 @@ import { Sol, Tokens } from "@/components/ui/amount";
 import { Panel } from "@/components/ui/panel";
 import { Segmented } from "@/components/ui/segmented";
 import { Empty, ErrorNote, Skeleton } from "@/components/ui/skeleton";
-import { DemoBadge } from "@/components/ui/status";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TokenAvatar } from "@/components/ui/token-avatar";
 import { TokenTable } from "@/components/home/token-table";
@@ -104,7 +103,6 @@ export function Explore() {
                     <Sol lamports={o.quoteAmountRaw} digits={3} />
                     <span className="num">{price(o.priceDecimal)}</span>
                     <span className={`num ml-auto ${new D(discountPct).lt(0) ? "text-sell" : "text-buy"}`} title="Versus the Pump price captured when the order was posted (estimate)">{pct(discountPct)} vs market at posting</span>
-                    <DemoBadge show={o.isDemo} />
                   </Link>
                 </li>
               ))}

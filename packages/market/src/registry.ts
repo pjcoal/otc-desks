@@ -40,7 +40,6 @@ export interface TokenDetail {
     creator: string | null;
     createdAt: string;
     launchedViaPlatform: boolean;
-    isDemo: boolean;
   };
   metadata: { description: string | null; website: string | null; twitter: string | null; telegram: string | null; uri: string | null; verifiedOnChain: boolean } | null;
   market: SerializedSnapshot;
@@ -75,6 +74,11 @@ export function serializeSnapshot(s: MarketSnapshot): SerializedSnapshot {
     slot: s.slot,
     fetchedAt: s.fetchedAt,
   };
+}
+
+/** The guarded E2E mode (apps/web/src/server/e2e.ts): LiteSVM test chain, localnet only. */
+export function isE2EFixtureMode(config: ServerConfig): boolean {
+  return process.env.E2E_LITESVM === "1" && config.SOLANA_CLUSTER === "localnet";
 }
 
 export class TokenRegistry implements MarketReader {
@@ -220,10 +224,11 @@ export class TokenRegistry implements MarketReader {
   }
 
   async tokenDetail(mint: string): Promise<TokenDetail> {
-    const demo = await this.db.token.findUnique({ where: { mint }, include: { metadata: true, market: true } });
-    if (demo?.isDemo) {
-      if (!this.config.DEMO_MODE) throw new AppError("NOT_FOUND", "Mint not found.");
-      return this.demoDetail(demo);
+    const fixture = await this.db.token.findUnique({ where: { mint }, include: { metadata: true, market: true } });
+    if (fixture?.isDemo) {
+      // End-to-end test fixtures (LiteSVM mint) only; unreachable outside the guarded localnet E2E mode.
+      if (!isE2EFixtureMode(this.config)) throw new AppError("NOT_FOUND", "Mint not found.");
+      return this.fixtureDetail(fixture);
     }
     const [snap, mintInfo, epoch] = await Promise.all([this.refreshMarket(mint), this.connection.getAccountInfo(new PublicKey(mint)), this.connection.getEpochInfo()]);
     if (!mintInfo) throw new AppError("NOT_FOUND", "Mint not found.");
@@ -241,7 +246,6 @@ export class TokenRegistry implements MarketReader {
         creator: row.creator,
         createdAt: row.createdAt.toISOString(),
         launchedViaPlatform: row.launchedViaPlatform,
-        isDemo: row.isDemo,
       },
       metadata: row.metadata
         ? { description: row.metadata.description, website: row.metadata.website, twitter: row.metadata.twitter, telegram: row.metadata.telegram, uri: row.metadata.uri, verifiedOnChain: insp.onChainMetadata?.uri === row.metadata.uri }
@@ -292,18 +296,18 @@ export class TokenRegistry implements MarketReader {
     return { synced: seen.size };
   }
 
-  /** Demo tokens exist only in the database (DEMO_MODE); never call the chain for them. */
-  private demoDetail(row: NonNullable<Awaited<ReturnType<Db["token"]["findUnique"]>>> & { market: { priceSolPerToken: Prisma.Decimal; marketCapLamports: Prisma.Decimal; liquidityLamports: Prisma.Decimal; bondingProgressBps: number | null; volume24hLamports: Prisma.Decimal; trades24h: number; slot: bigint; updatedAt: Date } | null }): TokenDetail {
+  /** E2E fixture tokens exist only in the test database and the in-process test chain. */
+  private fixtureDetail(row: NonNullable<Awaited<ReturnType<Db["token"]["findUnique"]>>> & { market: { priceSolPerToken: Prisma.Decimal; marketCapLamports: Prisma.Decimal; liquidityLamports: Prisma.Decimal; bondingProgressBps: number | null; volume24hLamports: Prisma.Decimal; trades24h: number; slot: bigint; updatedAt: Date } | null }): TokenDetail {
     const m = row.market;
     return {
-      token: { mint: row.mint, name: row.name, symbol: row.symbol, imageUrl: row.imageUrl, decimals: row.decimals, tokenProgram: row.tokenProgram, creator: row.creator, createdAt: row.createdAt.toISOString(), launchedViaPlatform: false, isDemo: true },
-      metadata: { description: "Demo token generated for UI development. Not a real market.", website: null, twitter: null, telegram: null, uri: null, verifiedOnChain: false },
+      token: { mint: row.mint, name: row.name, symbol: row.symbol, imageUrl: row.imageUrl, decimals: row.decimals, tokenProgram: row.tokenProgram, creator: row.creator, createdAt: row.createdAt.toISOString(), launchedViaPlatform: false },
+      metadata: { description: "End-to-end test fixture.", website: null, twitter: null, telegram: null, uri: null, verifiedOnChain: false },
       market: {
-        mint: row.mint, venue: row.venue, note: "Demo data: this token does not exist on chain.", tradable: false, tokenProgram: row.tokenProgram, decimals: row.decimals, supply: "1000000000000000",
+        mint: row.mint, venue: row.venue, note: "Test fixture: this token exists only on the in-process test chain.", tradable: false, tokenProgram: row.tokenProgram, decimals: row.decimals, supply: "1000000000000000",
         priceSolPerToken: m?.priceSolPerToken.toFixed() ?? "0", marketCapLamports: m?.marketCapLamports.toFixed(0) ?? "0", liquidityLamports: m?.liquidityLamports.toFixed(0) ?? "0", progressBps: m?.bondingProgressBps ?? null,
         bondingCurve: null, pool: null, slot: Number(m?.slot ?? 0), fetchedAt: (m?.updatedAt ?? new Date()).toISOString(),
       },
-      safety: { ok: true, blockers: [], warnings: ["Demo token."], extensions: [], freezeAuthority: null, mintAuthority: null, transferFeeBps: null },
+      safety: { ok: true, blockers: [], warnings: [], extensions: [], freezeAuthority: null, mintAuthority: null, transferFeeBps: null },
       stats: { volume24hLamports: m?.volume24hLamports.toFixed(0) ?? "0", trades24h: m?.trades24h ?? 0, holderCount: null },
     };
   }

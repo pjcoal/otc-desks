@@ -2,7 +2,7 @@ import { z } from "zod";
 import { getDb } from "@app/database";
 import { explore } from "@app/market";
 import { route, query } from "@/server/http";
-import { config, registry } from "@/server/context";
+import { registry } from "@/server/context";
 
 const SECTIONS = ["trending", "new", "near_graduation", "recently_graduated", "most_otc", "largest_discounts", "largest_otc_trades"] as const;
 
@@ -10,5 +10,5 @@ const SECTIONS = ["trending", "new", "near_graduation", "recently_graduated", "m
 export const GET = route({}, async ({ req }) => {
   const q = query(req, z.object({ section: z.enum(SECTIONS).default("trending"), limit: z.coerce.number().int().min(1).max(48).default(24) }));
   await registry().syncDiscovery().catch(() => null); // mainnet + PUMP_DISCOVERY_API only; at most once a minute
-  return explore(getDb(), q.section, config().DEMO_MODE, q.limit);
+  return explore(getDb(), q.section, q.limit);
 });

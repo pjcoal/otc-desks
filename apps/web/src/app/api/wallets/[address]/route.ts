@@ -2,7 +2,7 @@ import { getDb } from "@app/database";
 import { recentOtcTrades } from "@app/market";
 import { listOrders } from "@app/otc/server";
 import { route } from "@/server/http";
-import { config, otcContext } from "@/server/context";
+import { otcContext } from "@/server/context";
 import { zAddress } from "@/server/schemas";
 
 /** GET /api/wallets/:address — public profile. Never includes private offers or negotiations. */
@@ -10,9 +10,9 @@ export const GET = route<{ address: string }>({}, async ({ params }) => {
   const address = zAddress.parse(params.address);
   const db = getDb();
   const [created, orders, trades, activity] = await Promise.all([
-    db.token.findMany({ where: { creator: address, ...(config().DEMO_MODE ? {} : { isDemo: false }) }, include: { market: true }, orderBy: { createdAt: "desc" }, take: 50 }),
+    db.token.findMany({ where: { creator: address, isDemo: false }, include: { market: true }, orderBy: { createdAt: "desc" }, take: 50 }),
     listOrders(otcContext(), { maker: address, limit: 50 }, null),
-    recentOtcTrades(db, { wallet: address, includeDemo: config().DEMO_MODE, limit: 50, publicOnly: true }),
+    recentOtcTrades(db, { wallet: address, limit: 50, publicOnly: true }),
     db.trade.findMany({ where: { trader: address, isDemo: false }, orderBy: { blockTime: "desc" }, take: 30 }),
   ]);
   return {

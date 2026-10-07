@@ -10,7 +10,6 @@ export interface TokenCard {
   createdAt: string;
   graduatedAt: string | null;
   creator: string | null;
-  isDemo: boolean;
   market: { priceSolPerToken: string; marketCapLamports: string; volume24hLamports: string; trades24h: number; bondingProgressBps: number | null } | null;
 }
 
@@ -33,7 +32,7 @@ export interface Snapshot {
 }
 
 export interface TokenDetail {
-  token: { mint: string; name: string; symbol: string; imageUrl: string | null; decimals: number; tokenProgram: string; creator: string | null; createdAt: string; launchedViaPlatform: boolean; isDemo: boolean };
+  token: { mint: string; name: string; symbol: string; imageUrl: string | null; decimals: number; tokenProgram: string; creator: string | null; createdAt: string; launchedViaPlatform: boolean };
   metadata: { description: string | null; website: string | null; twitter: string | null; telegram: string | null; uri: string | null; verifiedOnChain: boolean } | null;
   market: Snapshot;
   safety: { ok: boolean; blockers: string[]; warnings: string[]; extensions: string[]; freezeAuthority: string | null; mintAuthority: string | null; transferFeeBps: number | null };
@@ -81,5 +80,4 @@ export interface OtcTradeRow {
   buyer: string;
   refPriceSolPerToken: string | null;
   blockTime: string | null;
-  isDemo: boolean;
 }

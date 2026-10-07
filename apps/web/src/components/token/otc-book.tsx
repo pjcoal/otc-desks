@@ -8,7 +8,6 @@ import { pct, price, timeLeft } from "@/lib/format";
 import type { OtcTradeRow } from "@/lib/types";
 import { Address } from "@/components/ui/address";
 import { Sol, Tokens } from "@/components/ui/amount";
-import { DemoBadge } from "@/components/ui/status";
 import { Empty } from "@/components/ui/skeleton";
 import { buttonClass } from "@/components/ui/button";
 import { relativeTime } from "@app/shared";
@@ -50,7 +49,7 @@ function OrderTable({ mint, orders, side, marketPrice, symbol }: { mint: string;
                   <Link href={`/deal/${o.publicId}`} className="hover:underline">
                     <Tokens raw={o.remainingAmountRaw} decimals={o.token.decimals} symbol={symbol} />
                   </Link>
-                  {o.allowPartialFill && <span className="ml-1.5 text-[12px] text-faint">partial ok</span>} <DemoBadge show={o.isDemo} />
+                  {o.allowPartialFill && <span className="ml-1.5 text-[12px] text-faint">partial ok</span>}
                 </td>
                 <td className="num px-2 py-2.5">{price(o.priceSolPerToken)}</td>
                 <td className="px-2 py-2.5"><Sol lamports={o.quoteAmountRaw} digits={3} /></td>

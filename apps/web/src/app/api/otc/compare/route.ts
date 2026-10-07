@@ -2,7 +2,6 @@ import { z } from "zod";
 import { D, SOL_DECIMALS, unitPrice } from "@app/shared";
 import { RATE_LIMITS } from "@app/shared/server";
 import { computeSettlementAmounts } from "@app/otc";
-import { getDb } from "@app/database";
 import { route, query } from "@/server/http";
 import { config, registry } from "@/server/context";
 import { serializeQuote } from "@/server/tx";
@@ -17,11 +16,6 @@ export const GET = route({ rateLimit: RATE_LIMITS.quote }, async ({ req }) => {
   const c = config();
   const tokens = BigInt(q.tokenAmount);
   const otcGross = BigInt(q.quoteLamports);
-  const demo = await getDb().token.findUnique({ where: { mint: q.mint }, select: { isDemo: true, decimals: true } });
-  if (demo?.isDemo) {
-    const otcDemo = computeSettlementAmounts({ grossQuote: BigInt(q.quoteLamports), feeBps: c.OTC_PLATFORM_FEE_BPS, feeMode: c.OTC_FEE_MODE, referralShareBps: 0, hasReferrer: false });
-    return { estimate: true, quotedAt: new Date().toISOString(), slot: 0, venue: "UNKNOWN", spotPriceSolPerToken: "0", otc: { priceSolPerToken: tokens > 0n ? unitPrice(otcGross, SOL_DECIMALS, tokens, demo.decimals).toFixed() : "0", premiumDiscountPct: null, grossLamports: otcGross.toString(), platformFeeLamports: otcDemo.totalFee.toString(), sellerNetLamports: otcDemo.sellerReceives.toString(), buyerPaysLamports: otcDemo.buyerPays.toString(), feeBps: c.OTC_PLATFORM_FEE_BPS, feeMode: c.OTC_FEE_MODE }, market: null, note: "Demo token: there is no live Pump market to compare against." };
-  }
   const market = await registry().pump.getMarket(q.mint);
   const otc = computeSettlementAmounts({ grossQuote: otcGross, feeBps: c.OTC_PLATFORM_FEE_BPS, feeMode: c.OTC_FEE_MODE, referralShareBps: 0, hasReferrer: false });
   const otcPrice = tokens > 0n ? unitPrice(otcGross, SOL_DECIMALS, tokens, market.decimals) : new D(0);

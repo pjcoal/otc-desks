@@ -39,7 +39,6 @@ export function publicConfig() {
     treasuryWallet: c.PLATFORM_TREASURY_WALLET ?? null,
     minTtlSeconds: c.OTC_MIN_TTL_SECONDS,
     maxTtlSeconds: c.OTC_MAX_TTL_SECONDS,
-    demoMode: c.DEMO_MODE,
     platformTokenMint: c.PLATFORM_TOKEN_MINT ?? null,
     priorityFeeMicroLamports: c.PRIORITY_FEE_MICROLAMPORTS,
   };

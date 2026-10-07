@@ -7,7 +7,6 @@ import type { OtcTradeRow, TokenCard } from "@/lib/types";
 import { Sol, Tokens } from "@/components/ui/amount";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { Empty, Skeleton } from "@/components/ui/skeleton";
-import { DemoBadge } from "@/components/ui/status";
 import { TokenTable } from "./token-table";
 
 export function LiveMarkets() {
@@ -35,7 +34,6 @@ export function RecentTrades() {
                 <span className="w-20 font-medium">{t.symbol}</span>
                 <Tokens raw={t.tokenAmountRaw} decimals={t.decimals} />
                 <Sol lamports={t.grossQuoteLamports} digits={2} />
-                <DemoBadge show={t.isDemo} />
                 <span className="ml-auto text-[13px] text-muted">{t.blockTime ? relativeTime(t.blockTime) : ""}</span>
               </Link>
             </li>

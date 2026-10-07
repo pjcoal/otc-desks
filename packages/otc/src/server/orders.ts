@@ -398,7 +398,7 @@ export async function listOrders(ctx: OtcContext, q: ListOrdersQuery, viewer: st
   const where: Prisma.OtcOrderWhereInput = {
     AND: [
       visibility,
-      { isDemo: ctx.config.DEMO_MODE ? undefined : false },
+      { isDemo: false }, // test-fixture rows never appear in listings
       q.mint ? { tokenMint: q.mint } : {},
       q.side ? { side: q.side } : {},
       q.maker ? { makerWallet: q.maker } : {},

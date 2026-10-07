@@ -12,7 +12,7 @@ import { Sol, Tokens } from "@/components/ui/amount";
 import { buttonClass } from "@/components/ui/button";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { Empty } from "@/components/ui/skeleton";
-import { DemoBadge, SideBadge, StatusPill } from "@/components/ui/status";
+import { SideBadge, StatusPill } from "@/components/ui/status";
 import { TokenAvatar } from "@/components/ui/token-avatar";
 
 export function OtcDesk() {
@@ -103,7 +103,7 @@ export function OtcDesk() {
                     <td className="px-4 py-2.5">
                       <Link href={`/deal/${o.publicId}`} className="flex items-center gap-2 hover:underline">
                         <TokenAvatar src={o.token.imageUrl} symbol={o.token.symbol} size={22} />
-                        {o.token.symbol} <DemoBadge show={o.isDemo} />
+                        {o.token.symbol}
                       </Link>
                     </td>
                     <td className="px-2 py-2.5"><SideBadge side={o.side} /></td>
@@ -132,7 +132,6 @@ export function OtcDesk() {
                   <span className="font-medium">{t.symbol}</span>
                   <Tokens raw={t.tokenAmountRaw} decimals={t.decimals} />
                   <Sol lamports={t.grossQuoteLamports} digits={3} />
-                  <DemoBadge show={t.isDemo} />
                   <span className="ml-auto text-[13px] text-muted">{t.blockTime ? relativeTime(t.blockTime) : ""}</span>
                 </Link>
               </li>

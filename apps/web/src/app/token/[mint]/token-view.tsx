@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button, buttonClass } from "@/components/ui/button";
 import { Panel, Row } from "@/components/ui/panel";
 import { Empty, ErrorNote, Skeleton } from "@/components/ui/skeleton";
-import { DemoBadge, VenueBadge } from "@/components/ui/status";
+import { VenueBadge } from "@/components/ui/status";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TokenAvatar } from "@/components/ui/token-avatar";
 import { toast } from "@/components/ui/toast";
@@ -73,7 +73,6 @@ export function TokenView({ mint }: { mint: string }) {
                 <h1 className="title-display text-[24px] sm:text-[30px]">{token.name}</h1>
                 <span className="text-lg text-muted">{token.symbol}</span>
                 <VenueBadge venue={market.venue} />
-                <DemoBadge show={token.isDemo} />
                 {token.launchedViaPlatform && <Badge tone="outline">Launched here</Badge>}
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-muted">

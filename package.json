@@ -26,7 +26,6 @@
     "db:generate": "npm run generate -w @app/database",
     "db:migrate": "npm run migrate -w @app/database",
     "db:deploy": "npm run deploy -w @app/database",
-    "db:seed-demo": "npm run seed-demo -w @app/database",
     "db:embedded": "tsx scripts/embedded-postgres.ts",
     "check": "npm run typecheck && npm run lint && npm run test"
   },

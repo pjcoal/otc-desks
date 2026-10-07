@@ -75,7 +75,6 @@ export function orderView(o: OtcOrder & { token?: Token | null; parentOrder?: { 
     refPriceAt: o.refPriceAt?.toISOString() ?? null,
     payload: { ...payloadOf(o), parentOrderHash: o.parentOrder?.orderHash ?? null },
     signature: o.signature,
-    isDemo: o.isDemo,
   };
 }
 

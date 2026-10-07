@@ -28,16 +28,16 @@ function DesktopIcons() {
 
 function SettlementDialog() {
   return (
-    <Panel className="shadow-[4px_4px_0_rgba(0,0,0,0.3)]" aria-label="Example: one transaction carries both legs of an OTC trade">
-      <TitleBar title="Settlement.dlg (example)" icon={<PixelIcon name="ticket" size={16} />} />
+    <Panel className="shadow-[4px_4px_0_rgba(0,0,0,0.3)]" aria-label="How one transaction carries both legs of an OTC trade">
+      <TitleBar title="Settlement.dlg" icon={<PixelIcon name="ticket" size={16} />} />
       <div className="space-y-2 p-4">
-        <div className="leg-left flex items-center justify-between bg-ink px-3 py-2 bevel-in">
+        <div className="leg-left flex items-center justify-between gap-4 bg-ink px-3 py-2 bevel-in">
           <span className="text-muted">Seller sends</span>
-          <span className="num text-[20px] text-brass">20,000,000 TOKEN</span>
+          <span className="text-right text-[18px] text-brass">the agreed tokens</span>
         </div>
-        <div className="leg-right flex items-center justify-between bg-ink px-3 py-2 bevel-in">
+        <div className="leg-right flex items-center justify-between gap-4 bg-ink px-3 py-2 bevel-in">
           <span className="text-muted">Buyer sends</span>
-          <span className="num text-[20px] text-glacier">37 SOL</span>
+          <span className="text-right text-[18px] text-glacier">the agreed SOL</span>
         </div>
         <div className="leg-seal flex items-start gap-3 pt-2">
           <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center border border-text bg-buy text-[14px] font-bold text-white" aria-hidden>

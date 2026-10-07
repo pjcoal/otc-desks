@@ -4,7 +4,7 @@ import { relativeTime } from "@app/shared";
 import { bps, price } from "@/lib/format";
 import type { TokenCard } from "@/lib/types";
 import { Sol } from "@/components/ui/amount";
-import { DemoBadge, VenueBadge } from "@/components/ui/status";
+import { VenueBadge } from "@/components/ui/status";
 import { TokenAvatar } from "@/components/ui/token-avatar";
 import { Empty } from "@/components/ui/skeleton";
 
@@ -31,7 +31,7 @@ export function TokenTable({ items, emptyTitle, emptyBody }: { items: TokenCard[
                 <Link href={`/token/${t.mint}`} className="flex items-center gap-2.5">
                   <TokenAvatar src={t.imageUrl} symbol={t.symbol} size={28} />
                   <span className="min-w-0">
-                    <span className="block font-medium">{t.symbol} <DemoBadge show={t.isDemo} /></span>
+                    <span className="block font-medium">{t.symbol}</span>
                     <span className="block max-w-[200px] truncate text-[13px] text-muted">{t.name}</span>
                   </span>
                 </Link>

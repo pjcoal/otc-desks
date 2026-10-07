@@ -18,9 +18,6 @@ describe("deployment configuration guards", () => {
     const ok = loadServerConfig({ ...base, SOLANA_CLUSTER: "mainnet-beta", ALLOW_MAINNET: "true", MAINNET_CHECKLIST_COMPLETED: "yes", SOLANA_RPC_FALLBACK_URL: "https://fallback.example", REDIS_URL: "redis://r", APP_URL: "https://otc.example" });
     expect(ok.transactionsEnabled).toBe(true);
   });
-  it("demo mode can never run against mainnet", () => {
-    expect(() => loadServerConfig({ ...base, SOLANA_CLUSTER: "mainnet-beta", ALLOW_MAINNET: "true", MAINNET_CHECKLIST_COMPLETED: "yes", SOLANA_RPC_FALLBACK_URL: "https://f.example", REDIS_URL: "redis://r", APP_URL: "https://otc.example", DEMO_MODE: "true" })).toThrow(/DEMO_MODE/);
-  });
   it("a platform fee requires a treasury, and production requires a real session secret", () => {
     expect(() => loadServerConfig({ SESSION_SECRET: "x".repeat(40) })).toThrow(/PLATFORM_TREASURY_WALLET/);
     expect(() => loadServerConfig({ NODE_ENV: "production", PLATFORM_TREASURY_WALLET: base.PLATFORM_TREASURY_WALLET })).toThrow(/SESSION_SECRET/);

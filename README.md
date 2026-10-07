@@ -57,7 +57,6 @@ Then:
 ```bash
 npm run db:generate           # Prisma client
 npm run db:deploy             # apply migrations (or `npm run db:migrate` while developing)
-npm run db:seed-demo          # optional: clearly-labelled demo data (visible only with DEMO_MODE=true)
 ```
 
 ### Redis
@@ -87,7 +86,6 @@ All variables are documented in [`.env.example`](.env.example) and validated at 
 | `PLATFORM_TREASURY_WALLET`, `OTC_PLATFORM_FEE_BPS`, `OTC_FEE_MODE`, `OTC_REFERRAL_SHARE_BPS` | Disclosed OTC fee economics |
 | `METADATA_PROVIDER` (+ `S3_*` or `METADATA_API_KEY`) | Token image/metadata storage |
 | `ADMIN_WALLETS` | Wallets allowed into `/admin` |
-| `DEMO_MODE` | Show labelled demo rows (refused on mainnet) |
 | `INDEXER_MODE` | `firehose` (devnet) or `tracked` (mainnet) |
 
 ## Solana devnet setup

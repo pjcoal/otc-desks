@@ -13,14 +13,14 @@ import { Sol, Tokens } from "@/components/ui/amount";
 import { Button } from "@/components/ui/button";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { Empty, ErrorNote, Skeleton } from "@/components/ui/skeleton";
-import { DemoBadge, SideBadge, StatusPill, VenueBadge } from "@/components/ui/status";
+import { SideBadge, StatusPill, VenueBadge } from "@/components/ui/status";
 import { TokenAvatar } from "@/components/ui/token-avatar";
 
 export interface PortfolioData {
   wallet: string;
   isSelf: boolean;
   solLamports: string;
-  positions: Array<{ mint: string; symbol: string; name: string; imageUrl: string | null; decimals: number; balanceRaw: string; venue: string; priceSolPerToken: string | null; estimatedValueLamports: string | null; pnlLamports: string | null; costBasisNote: string; isDemo: boolean }>;
+  positions: Array<{ mint: string; symbol: string; name: string; imageUrl: string | null; decimals: number; balanceRaw: string; venue: string; priceSolPerToken: string | null; estimatedValueLamports: string | null; pnlLamports: string | null; costBasisNote: string }>;
   openOrders: OrderView[];
   otcHistory: OtcTradeRow[];
   createdTokens: Array<{ mint: string; symbol: string; name: string; imageUrl: string | null; venue: string; createdAt: string; marketCapLamports: string | null }>;
@@ -84,7 +84,7 @@ export function Portfolio() {
                 {data.positions.map((p) => (
                   <tr key={p.mint} className="border-b border-line/60 hover:bg-hover">
                     <td className="px-4 py-2.5">
-                      <Link href={`/token/${p.mint}`} className="flex items-center gap-2"><TokenAvatar src={p.imageUrl} symbol={p.symbol} size={24} />{p.symbol} <DemoBadge show={p.isDemo} /></Link>
+                      <Link href={`/token/${p.mint}`} className="flex items-center gap-2"><TokenAvatar src={p.imageUrl} symbol={p.symbol} size={24} />{p.symbol}</Link>
                     </td>
                     <td className="px-2 py-2.5"><Tokens raw={p.balanceRaw} decimals={p.decimals} /></td>
                     <td className="num px-2 py-2.5">{price(p.priceSolPerToken)}</td>
