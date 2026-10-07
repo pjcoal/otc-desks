@@ -5,8 +5,9 @@ import { dec, Prisma, type Db, type MarketVenue } from "@app/database";
 import { inspectMintAccount, decodePythPrice, PYTH_SOL_USD_ACCOUNT, PYTH_SOL_USD_FEED_ID, type MintInspection } from "@app/solana";
 import { PumpAdapter, PumpDiscoveryApi, bondingProgressBps, type DiscoveredCoin, type DiscoverySort, type MarketSnapshot } from "@app/pump";
 import type { MarketReader, ReferencePrice, TokenInfo } from "@app/otc/server";
+import { BirdeyeApi } from "./birdeye";
 import { DexScreenerApi } from "./dexscreener";
-import { listingRules, type ListingRules } from "./listing";
+import { listedWhere, listingRules, type ListingRules } from "./listing";
 import { sanitizeMetadata } from "./metadata";
 import { normaliseUri, safeFetchJson, type Gateways } from "./safe-fetch";
 
@@ -17,6 +18,9 @@ const MARKET_FRESH_MS = 15_000;
 const CHAIN_SNAPSHOT_KEEP_MS = 10 * 60 * 1000;
 /** Upper bound on coins whose 24h volume is refreshed per discovery run (30 per DexScreener request). */
 const VOLUME_REFRESH_LIMIT = 240;
+/** Upper bound on coins whose global fees are checked per discovery run, and how often a coin below the floor is re-checked. */
+const FEES_REFRESH_LIMIT = 100;
+const FEES_RECHECK_MS = 15 * 60 * 1000;
 
 /** Minimal Metaplex metadata decode (legacy SPL Pump coins): name, symbol, uri. */
 function decodeMetaplex(data: Buffer): { name: string; symbol: string; uri: string } | null {
@@ -50,7 +54,7 @@ export interface TokenDetail {
   metadata: { description: string | null; website: string | null; twitter: string | null; telegram: string | null; uri: string | null; verifiedOnChain: boolean } | null;
   market: SerializedSnapshot;
   safety: MintInspection["safety"] & { extensions: string[]; freezeAuthority: string | null; mintAuthority: string | null; transferFeeBps: number | null };
-  stats: { volume24hLamports: string; volume24hUsd: string | null; trades24h: number; holderCount: number | null };
+  stats: { volume24hLamports: string; volume24hUsd: string | null; globalFeesLamports: string | null; trades24h: number; holderCount: number | null };
 }
 
 export type SerializedSnapshot = Omit<MarketSnapshot, "supply" | "marketCapLamports" | "liquidityLamports" | "bondingCurve" | "pool"> & {
@@ -259,7 +263,7 @@ export class TokenRegistry implements MarketReader {
         : null,
       market: serializeSnapshot(snap),
       safety: { ...insp.safety, extensions: insp.extensions, freezeAuthority: insp.freezeAuthority, mintAuthority: insp.mintAuthority, transferFeeBps: insp.transferFee?.basisPoints ?? null },
-      stats: { volume24hLamports: row.market?.volume24hLamports.toFixed() ?? "0", volume24hUsd: row.market?.volume24hUsd?.toFixed(2) ?? null, trades24h: row.market?.trades24h ?? 0, holderCount: row.market?.holderCount ?? null },
+      stats: { volume24hLamports: row.market?.volume24hLamports.toFixed() ?? "0", volume24hUsd: row.market?.volume24hUsd?.toFixed(2) ?? null, globalFeesLamports: row.market?.globalFeesLamports?.toFixed(0) ?? null, trades24h: row.market?.trades24h ?? 0, holderCount: row.market?.holderCount ?? null },
     };
   }
 
@@ -304,6 +308,7 @@ export class TokenRegistry implements MarketReader {
       await this.db.marketState.upsert({ where: { mint: c.mint }, create: { mint: c.mint, ...m }, update: m });
     }
     await this.refreshVolumes([...seen.keys()]).catch((e) => logger.warn({ err: e instanceof Error ? e.message : e }, "volume refresh failed"));
+    await this.refreshGlobalFees().catch((e) => logger.warn({ err: e instanceof Error ? e.message : e }, "global fees refresh failed"));
     return { synced: seen.size };
   }
 
@@ -326,6 +331,34 @@ export class TokenRegistry implements MarketReader {
     // Raw SQL so the row's updatedAt (the price-freshness clock) isn't bumped by a volume-only write.
     for (const [mint, v] of volumes) {
       await this.db.$executeRaw`UPDATE "MarketState" SET "volume24hUsd" = ${new Prisma.Decimal(v.volume24hUsd)}, "volume24hUsdAt" = ${at} WHERE mint = ${mint}`;
+    }
+  }
+
+  /**
+   * All-time global fees (Birdeye) for coins that pass every other listing rule. All-time fees only
+   * grow, so a coin at or above the floor is never re-checked; one below it is re-checked every 15 min.
+   */
+  private async refreshGlobalFees(): Promise<void> {
+    const rules = await this.listingRules();
+    if (!rules?.minGlobalFeesLamports || !this.config.BIRDEYE_API_KEY) return;
+    const recheckBefore = new Date(Date.now() - FEES_RECHECK_MS);
+    const candidates = await this.db.token.findMany({
+      where: {
+        isDemo: false,
+        launchedViaPlatform: false,
+        AND: [listedWhere({ ...rules, minGlobalFeesLamports: null }), { market: { OR: [{ globalFeesAt: null }, { globalFeesLamports: { lt: rules.minGlobalFeesLamports }, globalFeesAt: { lt: recheckBefore } }] } }],
+      },
+      orderBy: { market: { globalFeesAt: { sort: "asc", nulls: "first" } } },
+      select: { mint: true },
+      take: FEES_REFRESH_LIMIT,
+    });
+    if (candidates.length === 0) return;
+    const mints = candidates.map((c) => c.mint);
+    const fees = await new BirdeyeApi(this.config.BIRDEYE_API_URL, this.config.BIRDEYE_API_KEY).globalFeesLamports(mints);
+    const at = new Date();
+    // Coins Birdeye has no data for are recorded as 0, so they stay hidden until re-checked.
+    for (const mint of mints) {
+      await this.db.$executeRaw`UPDATE "MarketState" SET "globalFeesLamports" = ${new Prisma.Decimal((fees.get(mint) ?? 0n).toString())}, "globalFeesAt" = ${at} WHERE mint = ${mint}`;
     }
   }
 
@@ -369,7 +402,7 @@ export class TokenRegistry implements MarketReader {
         bondingCurve: null, pool: null, slot: Number(m?.slot ?? 0), fetchedAt: (m?.updatedAt ?? new Date()).toISOString(),
       },
       safety: { ok: true, blockers: [], warnings: [], extensions: [], freezeAuthority: null, mintAuthority: null, transferFeeBps: null },
-      stats: { volume24hLamports: m?.volume24hLamports.toFixed(0) ?? "0", volume24hUsd: null, trades24h: m?.trades24h ?? 0, holderCount: null },
+      stats: { volume24hLamports: m?.volume24hLamports.toFixed(0) ?? "0", volume24hUsd: null, globalFeesLamports: null, trades24h: m?.trades24h ?? 0, holderCount: null },
     };
   }
 

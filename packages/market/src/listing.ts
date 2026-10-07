@@ -12,6 +12,8 @@ export interface ListingRules {
   minVolumeUsd: Prisma.Decimal;
   /** Volume floor in lamports for indexer-measured volume. Null = price unknown. */
   minVolumeLamports: Prisma.Decimal | null;
+  /** All-time global fees floor. Null = rule off (no Birdeye key, or threshold 0). */
+  minGlobalFeesLamports: Prisma.Decimal | null;
   freshSince: Date;
 }
 
@@ -27,21 +29,24 @@ export function listingRules(config: ServerConfig, solUsd: string | null, now = 
     minMcapLamports: toLamports(config.LISTING_MIN_MCAP_USD),
     minVolumeUsd: new Prisma.Decimal(config.LISTING_MIN_VOLUME_USD),
     minVolumeLamports: toLamports(config.LISTING_MIN_VOLUME_USD),
+    minGlobalFeesLamports: config.BIRDEYE_API_KEY && config.LISTING_MIN_GLOBAL_FEES_SOL > 0 ? new Prisma.Decimal(new D(config.LISTING_MIN_GLOBAL_FEES_SOL).mul(1e9).toFixed(0, D.ROUND_UP)) : null,
     freshSince: new Date(now - VOLUME_FRESH_MS),
   };
 }
 
 /**
  * Recent coins are listed once their market cap reaches the floor; older coins need fresh 24h volume
- * above the floor (from the listing-stats source or from our own indexer). Coins launched through this
- * site are always listed. If the SOL/USD price is unknown, the USD floors cannot be converted and only
- * the USD-denominated volume rule applies (fail closed).
+ * above the floor (from the listing-stats source or from our own indexer). When the global-fees rule
+ * is on, both also need that much all-time fees paid. Coins launched through this site are always
+ * listed. If the SOL/USD price is unknown, the USD floors cannot be converted and only the
+ * USD-denominated volume rule applies (fail closed).
  */
 export function listedWhere(r: ListingRules | null): Prisma.TokenWhereInput {
   if (!r) return {};
+  const fees: Prisma.MarketStateWhereInput = r.minGlobalFeesLamports ? { globalFeesLamports: { gte: r.minGlobalFeesLamports } } : {};
   const volume: Prisma.MarketStateWhereInput[] = [{ volume24hUsd: { gte: r.minVolumeUsd }, volume24hUsdAt: { gte: r.freshSince } }];
   if (r.minVolumeLamports) volume.push({ volume24hLamports: { gte: r.minVolumeLamports }, updatedAt: { gte: r.freshSince } });
-  const or: Prisma.TokenWhereInput[] = [{ launchedViaPlatform: true }, { createdAt: { lt: r.recentSince }, market: { OR: volume } }];
-  if (r.minMcapLamports) or.push({ createdAt: { gte: r.recentSince }, market: { marketCapLamports: { gte: r.minMcapLamports } } });
+  const or: Prisma.TokenWhereInput[] = [{ launchedViaPlatform: true }, { createdAt: { lt: r.recentSince }, market: { OR: volume, ...fees } }];
+  if (r.minMcapLamports) or.push({ createdAt: { gte: r.recentSince }, market: { marketCapLamports: { gte: r.minMcapLamports }, ...fees } });
   return { OR: or };
 }

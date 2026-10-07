@@ -44,6 +44,12 @@ Discovery sections (Trending, New, Near graduation, Recently graduated) and name
 * older coins with at least `LISTING_MIN_VOLUME_USD` (default $100,000) of 24h volume measured in the last 2 hours, either by DexScreener or by our own indexer;
 * coins launched through this site, always.
 
+When `BIRDEYE_API_KEY` is set (Birdeye Business plan or higher), recent and older coins must also have paid at least `LISTING_MIN_GLOBAL_FEES_SOL` (default 50 SOL) in all-time "global fees". This is the sum of trading-platform fees, priority fees, tips and network fees paid by everyone who traded the coin, read from Birdeye's `GET /defi/v3/token/fee/multiple`.
+* Only coins that already pass the other rules are checked, in batches of 50.
+* All-time fees only grow, so a coin at or above the floor is never checked again. A coin below it is re-checked every 15 minutes.
+* A coin Birdeye has no data for is recorded as 0 and stays hidden.
+* Without a key the rule is off.
+
 "Launched here" and the OTC-activity sections reflect activity on this site and are not filtered. A token page is always reachable by mint, and pasting a mint into search always resolves it. On test clusters nothing is filtered and amounts stay in SOL.
 
 * **SOL/USD** comes from the on-chain Pyth sponsored feed `7UVimffxr9ow1uXYxsr4LHAcV58mLzhmwaeKvJ1pjLiE`, read through our own RPC (`packages/solana/src/pyth.ts`).

@@ -26,7 +26,8 @@ function ListingNote() {
   const age = listing.recentHours % 24 === 0 ? `${listing.recentHours / 24} days` : `${listing.recentHours} hours`;
   return (
     <p className="px-3 pb-2 text-[13px] text-muted">
-      Showing coins under {age} old with at least {formatUsd(new D(listing.minMcapUsd))} market cap, and older coins with at least {formatUsd(new D(listing.minVolumeUsd))} of 24h volume. Coins launched here are always shown. Paste a mint into Search to open any coin.
+      Showing coins under {age} old with at least {formatUsd(new D(listing.minMcapUsd))} market cap, and older coins with at least {formatUsd(new D(listing.minVolumeUsd))} of 24h volume
+      {listing.minGlobalFeesSol !== null && <>, that have paid at least {listing.minGlobalFeesSol} SOL in global fees</>}. Coins launched here are always shown. Paste a mint into Search to open any coin.
     </p>
   );
 }

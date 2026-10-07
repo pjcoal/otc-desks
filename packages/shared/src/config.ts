@@ -101,6 +101,11 @@ export const serverEnvSchema = z
     LISTING_RECENT_HOURS: z.coerce.number().int().min(1).max(24 * 90).default(72),
     LISTING_MIN_MCAP_USD: z.coerce.number().int().min(0).default(500_000),
     LISTING_MIN_VOLUME_USD: z.coerce.number().int().min(0).default(100_000),
+    /** All-time global fees paid (SOL) a listed coin needs. Applied only when BIRDEYE_API_KEY is set; 0 disables. */
+    LISTING_MIN_GLOBAL_FEES_SOL: z.coerce.number().min(0).max(1_000_000).default(50),
+    /** Birdeye Data API key (Business plan or higher: global-fees endpoints). Server-only; never sent to browsers. */
+    BIRDEYE_API_KEY: optionalString,
+    BIRDEYE_API_URL: z.url().default("https://public-api.birdeye.so"),
     LOG_LEVEL: z.enum(["trace", "debug", "info", "warn", "error", "fatal"]).default("info"),
     ERROR_WEBHOOK_URL: optionalString.pipe(z.url().optional()),
   })

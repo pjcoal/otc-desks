@@ -18,7 +18,7 @@ const HOUR = 3600_000;
 const SOL_USD = "100"; // $500k market cap = 5,000 SOL; $100k volume = 1,000 SOL
 const mainnet = loadServerConfig({ SOLANA_CLUSTER: "mainnet-beta", OTC_PLATFORM_FEE_BPS: "0" });
 
-async function coin(symbol: string, o: { ageHours: number; mcapSol: number; volumeUsd?: number | null; volumeUsdAgeHours?: number; volumeSol?: number; launchedHere?: boolean }) {
+async function coin(symbol: string, o: { ageHours: number; mcapSol: number; volumeUsd?: number | null; volumeUsdAgeHours?: number; volumeSol?: number; feesSol?: number; launchedHere?: boolean }) {
   const mint = Keypair.generate().publicKey.toBase58();
   const now = Date.now();
   await db.token.create({ data: { mint, name: symbol, symbol, decimals: 6, tokenProgram: "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb", venue: "PUMP_BONDING_CURVE", createdAt: new Date(now - o.ageHours * HOUR), lastTradeAt: new Date(now - 60_000), launchedViaPlatform: o.launchedHere ?? false } });
@@ -28,6 +28,7 @@ async function coin(symbol: string, o: { ageHours: number; mcapSol: number; volu
       volume24hLamports: dec(BigInt(o.volumeSol ?? 0) * 1_000_000_000n),
       volume24hUsd: o.volumeUsd === undefined || o.volumeUsd === null ? null : String(o.volumeUsd),
       volume24hUsdAt: o.volumeUsd === undefined || o.volumeUsd === null ? null : new Date(now - (o.volumeUsdAgeHours ?? 0) * HOUR),
+      ...(o.feesSol === undefined ? {} : { globalFeesLamports: dec(BigInt(o.feesSol) * 1_000_000_000n), globalFeesAt: new Date(now) }),
     },
   });
   return mint;
@@ -49,6 +50,19 @@ describe("listing rules", () => {
     await coin("OWNCOIN", { ageHours: 24 * 9, mcapSol: 30, launchedHere: true });
     expect(await symbols("new")).toEqual(["OLDBUSY", "OLDINDEXED", "OWNCOIN", "RECENTBIG"]);
     expect(await symbols("trending")).toEqual(["OLDBUSY", "OLDINDEXED", "OWNCOIN", "RECENTBIG"]);
+  });
+
+  it("with a Birdeye key, also requires all-time global fees (launched-here coins exempt)", async () => {
+    await coin("RECENTPAID", { ageHours: 10, mcapSol: 6000, feesSol: 50 });
+    await coin("RECENTCHEAP", { ageHours: 10, mcapSol: 6000, feesSol: 49 });
+    await coin("RECENTUNKNOWN", { ageHours: 10, mcapSol: 6000 });
+    await coin("OLDPAID", { ageHours: 24 * 5, mcapSol: 50, volumeUsd: 150_000, feesSol: 400 });
+    await coin("OLDCHEAP", { ageHours: 24 * 5, mcapSol: 50, volumeUsd: 150_000, feesSol: 3 });
+    await coin("OWNCOIN", { ageHours: 24 * 9, mcapSol: 30, launchedHere: true });
+    const withFees = loadServerConfig({ SOLANA_CLUSTER: "mainnet-beta", OTC_PLATFORM_FEE_BPS: "0", BIRDEYE_API_KEY: "k" });
+    expect(await symbols("new", listingRules(withFees, SOL_USD))).toEqual(["OLDPAID", "OWNCOIN", "RECENTPAID"]);
+    // Without a key the rule is off.
+    expect(await symbols("new")).toEqual(["OLDCHEAP", "OLDPAID", "OWNCOIN", "RECENTCHEAP", "RECENTPAID", "RECENTUNKNOWN"]);
   });
 
   it("fails closed without a SOL/USD price: only USD-measured volume and own coins qualify", async () => {

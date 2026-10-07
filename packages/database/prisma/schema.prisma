@@ -148,6 +148,9 @@ model MarketState {
   /// 24h volume in USD from the optional listing-stats source (DexScreener). Listing/display only.
   volume24hUsd         Decimal?    @db.Decimal(24, 2)
   volume24hUsdAt       DateTime?
+  /// All-time "global fees paid" by traders (platform + priority + tips + network), from Birdeye. Listing only.
+  globalFeesLamports   Decimal?    @db.Decimal(40, 0)
+  globalFeesAt         DateTime?
   holderCount          Int?
   slot                 BigInt
   updatedAt            DateTime    @updatedAt
@@ -155,6 +158,7 @@ model MarketState {
   @@index([marketCapLamports])
   @@index([volume24hLamports])
   @@index([volume24hUsd])
+  @@index([globalFeesLamports])
   @@index([bondingProgressBps])
 }
 

@@ -99,6 +99,7 @@ export function TokenView({ mint }: { mint: string }) {
             <Stat label="Market cap"><Usd lamports={market.marketCapLamports} digits={1} /></Stat>
             <Stat label={market.venue === "PUMPSWAP" ? "Pool liquidity" : "SOL in curve"}><Sol lamports={market.liquidityLamports} digits={2} /></Stat>
             <Stat label="24h volume"><Usd usd={stats.volume24hUsd} lamports={stats.volume24hLamports} /></Stat>
+            {stats.globalFeesLamports !== null && <Stat label="Global fees paid"><Sol lamports={stats.globalFeesLamports} digits={2} /></Stat>}
             <Stat label="24h trades">{stats.trades24h}</Stat>
             <Stat label="Holders">{stats.holderCount ?? <span className="text-faint" title="Exact holder counts are not tracked">—</span>}</Stat>
           </dl>
