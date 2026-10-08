@@ -5,7 +5,7 @@ import { useConnection } from "@solana/wallet-adapter-react";
 import { useQuery } from "@tanstack/react-query";
 import { LogOut, Wallet } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DropdownMenu } from "radix-ui";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -19,25 +19,49 @@ const INSTALL = [
   { name: "Backpack", url: "https://backpack.app/downloads" },
 ];
 
+/** Wallet apps' in-app browsers, for phones where the system browser has no wallet. */
+const OPEN_IN_APP = [
+  { name: "Phantom", url: (page: string, ref: string) => `https://phantom.app/ul/browse/${encodeURIComponent(page)}?ref=${encodeURIComponent(ref)}` },
+  { name: "Solflare", url: (page: string, ref: string) => `https://solflare.com/ul/v1/browse/${encodeURIComponent(page)}?ref=${encodeURIComponent(ref)}` },
+  { name: "Backpack", url: (page: string, ref: string) => `https://backpack.app/ul/v1/browse/${encodeURIComponent(page)}?ref=${encodeURIComponent(ref)}` },
+];
+
+function useIsMobile(): boolean {
+  const [mobile, setMobile] = useState(false);
+  useEffect(() => setMobile(/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)), []);
+  return mobile;
+}
+
 export function ConnectDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
-  const { wallets, select, connect } = useWallet();
+  const { wallets, select } = useWallet();
+  const mobile = useIsMobile();
   const detected = wallets.filter((w) => w.readyState === WalletReadyState.Installed || w.readyState === WalletReadyState.Loadable);
+  const page = typeof window === "undefined" ? "" : window.location.href;
+  const ref = typeof window === "undefined" ? "" : window.location.origin;
   return (
     <Dialog open={open} onOpenChange={onOpenChange} title="Connect a wallet" description="Your wallet signs everything. This site never sees your private key or seed phrase.">
       <div className="space-y-2">
-        {detected.length === 0 && <p className="text-muted">No Solana wallet detected in this browser.</p>}
+        {detected.length === 0 && (
+          <p className="text-muted">{mobile ? "On a phone, open this page inside your wallet app's browser to connect." : "No Solana wallet detected in this browser."}</p>
+        )}
+        {detected.length === 0 && mobile && (
+          <div className="flex flex-col gap-2">
+            {OPEN_IN_APP.map((a) => (
+              <a key={a.name} href={a.url(page, ref)} className="flex items-center justify-between bg-panel px-3 py-2 font-medium bevel-out active:bevel-in">
+                Open in {a.name}
+              </a>
+            ))}
+          </div>
+        )}
         {detected.map((w) => (
           <button
             key={w.adapter.name}
             className="flex w-full items-center gap-3 bg-panel px-3 py-2 text-left bevel-out active:bevel-in"
-            onClick={async () => {
+            onClick={() => {
+              // The provider auto-connects once the selection lands. Calling connect() here would still
+              // see the previous (empty) selection and fail with "WalletNotSelectedError".
               select(w.adapter.name);
               onOpenChange(false);
-              try {
-                await connect();
-              } catch {
-                // the provider's onError toast reports it
-              }
             }}
           >
             <img src={w.adapter.icon} alt="" className="size-6 [image-rendering:pixelated]" />
@@ -46,7 +70,7 @@ export function ConnectDialog({ open, onOpenChange }: { open: boolean; onOpenCha
           </button>
         ))}
         <div className="pt-3">
-          <p className="mb-2 text-[13px] text-muted">Install a wallet</p>
+          <p className="mb-2 text-[13px] text-muted">{mobile ? "Don't have one? Install a wallet" : "Install a wallet"}</p>
           <div className="flex flex-wrap gap-2">
             {INSTALL.filter((i) => !detected.some((d) => d.adapter.name.startsWith(i.name))).map((i) => (
               <a key={i.name} href={i.url} target="_blank" rel="noreferrer noopener" className="bg-panel px-3 py-1 text-[13px] bevel-out active:bevel-in">

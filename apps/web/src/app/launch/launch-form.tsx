@@ -12,6 +12,7 @@ import { signAndSend, UserRejected, waitForConfirmation } from "@/lib/signing";
 import { useSettings } from "@/lib/settings";
 import type { Quote } from "@/lib/types";
 import { useAuth } from "@/components/providers/auth";
+import { ConnectDialog } from "@/components/wallet/wallet-button";
 import { useConfig } from "@/components/providers/config";
 import { Address } from "@/components/ui/address";
 import { Sol, Tokens } from "@/components/ui/amount";
@@ -34,6 +35,7 @@ export function LaunchForm() {
   const { connection } = useConnection();
   const router = useRouter();
   const { status, signIn } = useAuth();
+  const [connectOpen, setConnectOpen] = useState(false);
   const { slippageBps, setSlippageBps } = useSettings();
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
@@ -250,9 +252,16 @@ export function LaunchForm() {
         </div>
         <ErrorNote error={error} />
         {!cfg.launchesEnabled && <ErrorNote error="Launching is disabled on this deployment." />}
-        <Button size="lg" disabled={!formValid || !wallet.connected || !cfg.launchesEnabled} loading={busy === "prepare"} onClick={() => void prepare()}>
-          {wallet.connected ? "Review launch" : "Connect a wallet to launch"}
-        </Button>
+        {wallet.connected ? (
+          <Button size="lg" disabled={!formValid || !cfg.launchesEnabled} loading={busy === "prepare"} onClick={() => void prepare()}>
+            Review launch
+          </Button>
+        ) : (
+          <Button size="lg" variant="primary" disabled={!cfg.launchesEnabled} onClick={() => setConnectOpen(true)}>
+            Connect a wallet to launch
+          </Button>
+        )}
+        <ConnectDialog open={connectOpen} onOpenChange={setConnectOpen} />
         <p className="text-[13px] text-faint">Images are re-encoded to WebP and stored with the metadata before the token is created.</p>
       </Panel>
     </div>
