@@ -3,10 +3,17 @@ import { z } from "zod";
 import { AppError } from "@app/shared";
 import { getKv } from "@app/shared/server";
 import { route, body } from "@/server/http";
+import { getRpc } from "@app/solana/server";
+import { formatSol } from "@app/shared";
 import { issuedMetadataKey, type IssuedMetadata } from "@/server/launch";
 import { registry } from "@/server/context";
 import { prepareUserTransaction, serializeQuote } from "@/server/tx";
 import { zAddress, zSlippageBps, zU64 } from "@/server/schemas";
+
+/** Measured on mainnet (2026-10-08): rent for Pump's accounts plus the network and priority fee. */
+const LAUNCH_COST_LAMPORTS = 5_750_000n;
+/** Cost plus the payer's rent-exempt minimum (890,880 lamports) and a small margin. */
+const LAUNCH_MIN_BALANCE_LAMPORTS = 7_000_000n;
 
 /**
  * POST /api/launch/prepare — build create_v2 (Token-2022) or create_v2 + atomic first buy.
@@ -33,6 +40,12 @@ export const POST = route({ auth: "required", transactional: "launch" }, async (
   const issued = raw ? (JSON.parse(raw) as IssuedMetadata) : null;
   if (!issued || issued.wallet !== wallet || issued.name !== input.name || issued.symbol !== input.symbol) {
     throw new AppError("VALIDATION", "Upload the token's image and details on this page first, then launch with the same name and ticker.");
+  }
+  // A create_v2 launch costs the creator ~0.00575 SOL (Pump account rent + network fee), and the
+  // wallet must keep its own rent-exempt minimum. Check up front so people get a clear answer.
+  const balance = BigInt(await getRpc().freshConnection.getBalance(new PublicKey(wallet!), "confirmed"));
+  if (balance < LAUNCH_MIN_BALANCE_LAMPORTS) {
+    throw new AppError("BUYER_INSUFFICIENT_SOL", `Launching costs about ${formatSol(LAUNCH_COST_LAMPORTS, 4)} SOL, and your wallet must keep a small reserve. You need at least ${formatSol(LAUNCH_MIN_BALANCE_LAMPORTS, 4)} SOL; this wallet has ${formatSol(balance, 4)} SOL.`);
   }
   const pump = registry().pump;
   const exists = await pump.getMarket(input.mint).then(() => true, () => false);

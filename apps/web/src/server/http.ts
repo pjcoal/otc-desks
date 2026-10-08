@@ -90,9 +90,12 @@ function errorResponse(e: unknown, req: NextRequest, ms: number): NextResponse {
   if (isAppError(e)) {
     metrics.inc(`http.error.${e.code}`);
     if (e.status >= 500) void logError(e.code, e.message, { path: req.nextUrl.pathname });
+    // Refused launch steps are logged so the owner can see why people's launches fail.
+    else if (req.nextUrl.pathname.startsWith("/api/launch") || req.nextUrl.pathname === "/api/tx/submit") logger.warn({ path: req.nextUrl.pathname, code: e.code, message: e.message }, "launch step refused");
     return json(e.toJSON(), { status: e.status });
   }
   if (e instanceof ZodError) {
+    if (req.nextUrl.pathname.startsWith("/api/launch")) logger.warn({ path: req.nextUrl.pathname, code: "VALIDATION", issues: e.issues.map((i) => `${i.path.join(".")}: ${i.message}`) }, "launch step refused");
     return json({ error: { code: "VALIDATION", message: "Some fields are invalid.", details: e.issues.map((i) => ({ path: i.path.join("."), message: i.message })) } }, { status: 400 });
   }
   const message = e instanceof Error ? e.message : String(e);

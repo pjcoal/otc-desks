@@ -1,5 +1,6 @@
 "use client";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { useQuery } from "@tanstack/react-query";
 import { Keypair, VersionedTransaction } from "@solana/web3.js";
 import { ImagePlus } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -36,6 +37,7 @@ export function LaunchForm() {
   const router = useRouter();
   const { status, signIn } = useAuth();
   const [connectOpen, setConnectOpen] = useState(false);
+  const { data: walletBalance } = useQuery({ queryKey: ["balance", wallet.publicKey?.toBase58()], queryFn: () => connection.getBalance(wallet.publicKey!), enabled: !!wallet.publicKey, refetchInterval: 20_000 });
   const { slippageBps, setSlippageBps } = useSettings();
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
@@ -252,6 +254,10 @@ export function LaunchForm() {
         </div>
         <ErrorNote error={error} />
         {!cfg.launchesEnabled && <ErrorNote error="Launching is disabled on this deployment." />}
+        <p className="text-[13px] text-muted">
+          Launching costs about 0.006 SOL (Pump&apos;s account rent plus the network fee), paid from your wallet. Keep at least 0.007 SOL in it.
+          {walletBalance !== undefined && <> Your wallet has <span className={walletBalance < 7_000_000 ? "text-sell" : "text-buy"}>{(walletBalance / 1e9).toFixed(4)} SOL</span>.</>}
+        </p>
         {wallet.connected ? (
           <Button size="lg" disabled={!formValid || !cfg.launchesEnabled} loading={busy === "prepare"} onClick={() => void prepare()}>
             Review launch
