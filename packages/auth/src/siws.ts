@@ -33,5 +33,14 @@ export function buildSignInMessage(f: SignInFields): string {
   ].join("\n");
 }
 
+/**
+ * SIWS "Chain ID" for a cluster. The spec allows only mainnet / testnet / devnet / localnet (optionally
+ * prefixed "solana:"). Phantom parses sign-in messages and rejects malformed ones, so "solana:mainnet-beta"
+ * made every Phantom sign-in fail on mainnet.
+ */
+export function siwsChainId(cluster: "mainnet-beta" | "devnet" | "testnet" | "localnet"): "mainnet" | "devnet" | "testnet" | "localnet" {
+  return cluster === "mainnet-beta" ? "mainnet" : cluster;
+}
+
 export const SIGN_IN_STATEMENT =
   "Sign in to prove you control this wallet. This request will not trigger a blockchain transaction or cost any fees.";
